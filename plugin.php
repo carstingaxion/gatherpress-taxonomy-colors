@@ -717,6 +717,11 @@ if ( ! class_exists( __NAMESPACE__ . '\\Term_Color_Tokens' ) ) {
 		/**
 		 * Returns the abstract term color slot definitions — one pair per taxonomy.
 		 *
+		 * Only includes slots for taxonomies that are currently registered.
+		 * This prevents phantom palette entries when a taxonomy slug is in
+		 * the filter but the taxonomy itself doesn't exist yet (e.g., a
+		 * shadow taxonomy whose plugin isn't active).
+		 *
 		 * @since  0.1.0
 		 * @return array<int, array{slug: string, name: string, property: string, fallback: string, taxonomy: string, meta_key: string}>
 		 */
@@ -740,7 +745,14 @@ if ( ! class_exists( __NAMESPACE__ . '\\Term_Color_Tokens' ) ) {
 
 			foreach ( $taxonomies as $index => $taxonomy ) {
 				$tax_object = get_taxonomy( $taxonomy );
-				$tax_label  = $tax_object ? $tax_object->labels->singular_name : ucfirst( $taxonomy );
+
+				// Skip taxonomies that are not registered — avoids injecting
+				// palette entries for slugs whose taxonomy doesn't exist yet.
+				if ( ! $tax_object ) {
+					continue;
+				}
+
+				$tax_label = $tax_object->labels->singular_name;
 
 				if ( isset( $fallback_pairs[ $index ] ) ) {
 					$fallbacks = $fallback_pairs[ $index ];
