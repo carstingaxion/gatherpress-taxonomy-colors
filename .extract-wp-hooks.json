@@ -1,0 +1,13 @@
+{
+	"namespace": "GatherpressTaxonomyColors",
+	"base_dir": ".",
+	"wiki_directory": "docs/developer/hooks",
+	"github_blob_url": "https://github.com/carstingaxion/gatherpress-taxonomy-colors/blob/main/",
+	"exclude_dirs": [
+		"vendor",
+		"test",
+		"wp-content",
+		"build"
+	],
+	"github_wiki": false
+}
