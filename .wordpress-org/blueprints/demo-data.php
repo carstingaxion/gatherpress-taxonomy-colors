@@ -314,7 +314,7 @@ if ( ! $tutorial_existing ) {
 <!-- /wp:paragraph -->
 
 <!-- wp:paragraph -->
-<p><strong>Step 3:</strong> Pick "Category Color (Primary)". The text turns blue — the color of the Technology category. Now switch this post\'s category to "Design" (in the sidebar) and watch the color update to purple.</p>
+<p><strong>Step 3:</strong> Pick "Category Color (Primary)". The text turns blue — the color of the Technology category. The color resolves from the post\'s current terms at page load. If you switch this post\'s category to "Design", save, and reload the editor, the color updates to purple.</p>
 <!-- /wp:paragraph -->
 
 <!-- wp:separator -->
