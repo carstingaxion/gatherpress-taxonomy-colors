@@ -1,8 +1,10 @@
 /**
  * Shadow Term Colors — Editor Sidebar Panel
  *
- * Provides primary and secondary color pickers for shadow-source post types
- * directly in the block editor sidebar. Styled to match core's Color panel.
+ * Provides dynamically generated color pickers for shadow-source post types
+ * directly in the block editor sidebar. The number and labels of color rows
+ * are driven by the server-provided `gptcColorRoles` config, which mirrors
+ * the `gptc_term_color_roles` filter output.
  *
  * @since 0.1.3
  * @package GatherpressTaxonomyColors
@@ -17,9 +19,7 @@ import {
 	Dropdown,
 	Button,
 	Spinner,
-	__experimentalHStack as HStack,
 	__experimentalVStack as VStack,
-	ColorIndicator,
 } from '@wordpress/components';
 import { PluginDocumentSettingPanel } from '@wordpress/editor';
 import apiFetch from '@wordpress/api-fetch';
@@ -134,6 +134,9 @@ function ColorRow( { label, value, onChange, colors } ) {
 /**
  * Shadow Term Colors sidebar panel.
  *
+ * Dynamically renders one color row per registered color role,
+ * driven by the `gptcColorRoles` server config.
+ *
  * @return {Element|null} The sidebar panel element or null.
  */
 export default function ShadowColorsPanel() {
@@ -164,15 +167,15 @@ export default function ShadowColorsPanel() {
 
 	const config = window.gptcShadowConfig || {};
 	const taxonomySlug = config[ postType ] || '';
+	const colorRoles = window.gptcColorRoles || [];
 
 	const [ termId, setTermId ] = useState( null );
-	const [ primaryColor, setPrimaryColor ] = useState( '' );
-	const [ secondaryColor, setSecondaryColor ] = useState( '' );
+	const [ colorValues, setColorValues ] = useState( {} );
 	const [ loading, setLoading ] = useState( true );
 
 	// Refs for debounced save.
 	const saveTimerRef = useRef( null );
-	const colorsRef = useRef( { primary: '', secondary: '' } );
+	const colorsRef = useRef( {} );
 
 	const fetchTermColors = useCallback( () => {
 		if ( ! taxonomySlug || ! postSlug ) {
@@ -191,11 +194,13 @@ export default function ShadowColorsPanel() {
 				if ( terms && terms.length > 0 ) {
 					const term = terms[ 0 ];
 					setTermId( term.id );
-					const p = term.meta?.term_color || '';
-					const s = term.meta?.term_color_secondary || '';
-					setPrimaryColor( p );
-					setSecondaryColor( s );
-					colorsRef.current = { primary: p, secondary: s };
+
+					const values = {};
+					colorRoles.forEach( ( role ) => {
+						values[ role.meta_key ] = term.meta?.[ role.meta_key ] || '';
+					} );
+					setColorValues( values );
+					colorsRef.current = { ...values };
 				} else {
 					setTermId( null );
 				}
@@ -206,7 +211,7 @@ export default function ShadowColorsPanel() {
 			.finally( () => {
 				setLoading( false );
 			} );
-	}, [ taxonomySlug, postSlug ] );
+	}, [ taxonomySlug, postSlug, colorRoles ] );
 
 	useEffect( () => {
 		fetchTermColors();
@@ -231,15 +236,15 @@ export default function ShadowColorsPanel() {
 		}
 
 		saveTimerRef.current = setTimeout( () => {
+			const meta = {};
+			Object.keys( colorsRef.current ).forEach( ( key ) => {
+				meta[ key ] = colorsRef.current[ key ];
+			} );
+
 			apiFetch( {
 				path: `/wp/v2/${ encodeURIComponent( taxonomySlug ) }/${ termId }`,
 				method: 'POST',
-				data: {
-					meta: {
-						term_color: colorsRef.current.primary,
-						term_color_secondary: colorsRef.current.secondary,
-					},
-				},
+				data: { meta },
 			} )
 				.then( () => {
 					// Mark the post as dirty so the editor enables the
@@ -259,21 +264,11 @@ export default function ShadowColorsPanel() {
 		}, 600 );
 	}, [ termId, taxonomySlug, editPost ] );
 
-	const handlePrimaryChange = useCallback(
-		( value ) => {
+	const handleColorChange = useCallback(
+		( metaKey, value ) => {
 			const hex = value || '';
-			setPrimaryColor( hex );
-			colorsRef.current.primary = hex;
-			scheduleSave();
-		},
-		[ scheduleSave ]
-	);
-
-	const handleSecondaryChange = useCallback(
-		( value ) => {
-			const hex = value || '';
-			setSecondaryColor( hex );
-			colorsRef.current.secondary = hex;
+			setColorValues( ( prev ) => ( { ...prev, [ metaKey ]: hex } ) );
+			colorsRef.current[ metaKey ] = hex;
 			scheduleSave();
 		},
 		[ scheduleSave ]
@@ -320,18 +315,15 @@ export default function ShadowColorsPanel() {
 
 			{ ! loading && termId && (
 				<VStack spacing={ 0 }>
-					<ColorRow
-						label={ __( 'Primary', 'gatherpress-taxonomy-colors' ) }
-						value={ primaryColor }
-						onChange={ handlePrimaryChange }
-						colors={ themeColors }
-					/>
-					<ColorRow
-						label={ __( 'Secondary', 'gatherpress-taxonomy-colors' ) }
-						value={ secondaryColor }
-						onChange={ handleSecondaryChange }
-						colors={ themeColors }
-					/>
+					{ colorRoles.map( ( role ) => (
+						<ColorRow
+							key={ role.slug }
+							label={ role.label }
+							value={ colorValues[ role.meta_key ] || '' }
+							onChange={ ( val ) => handleColorChange( role.meta_key, val ) }
+							colors={ themeColors }
+						/>
+					) ) }
 				</VStack>
 			) }
 		</PluginDocumentSettingPanel>

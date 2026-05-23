@@ -76,8 +76,8 @@ if ( ! trait_exists( __NAMESPACE__ . '\\Singleton' ) ) {
  * Class: Helpers
  *
  * Shared utility methods used across multiple layers: taxonomy slug
- * normalization, CSS block generation, palette merging, and per-
- * taxonomy term color resolution.
+ * normalization, CSS block generation, palette merging, color role
+ * retrieval, and per-taxonomy term color resolution.
  *
  * @since 0.1.1
  * ==================================================================== */
@@ -90,6 +90,86 @@ if ( ! class_exists( __NAMESPACE__ . '\\Helpers' ) ) {
 	 * @since 0.1.1
 	 */
 	final class Helpers {
+
+		/**
+		 * Cached color roles array.
+		 *
+		 * @since 0.2.0
+		 * @var array|null
+		 */
+		private static ?array $color_roles_cache = null;
+
+		/**
+		 * Returns the registered color roles — the single source of truth
+		 * for how many (and which) color slots exist per taxonomy term.
+		 *
+		 * Each role is an associative array with keys:
+		 * - slug     (string) Unique identifier, e.g. 'primary', 'secondary', 'accent'.
+		 * - label    (string) Human-readable label, e.g. 'Primary'.
+		 * - meta_key (string) Term meta key, e.g. 'term_color', 'term_color_secondary'.
+		 *
+		 * @since  0.2.0
+		 * @return array<int, array{slug: string, label: string, meta_key: string}>
+		 */
+		public static function get_color_roles(): array {
+			if ( null !== self::$color_roles_cache ) {
+				return self::$color_roles_cache;
+			}
+
+			$defaults = array(
+				array(
+					'slug'     => 'primary',
+					'label'    => __( 'Primary', 'gatherpress-taxonomy-colors' ),
+					'meta_key' => 'term_color',
+				),
+				array(
+					'slug'     => 'secondary',
+					'label'    => __( 'Secondary', 'gatherpress-taxonomy-colors' ),
+					'meta_key' => 'term_color_secondary',
+				),
+			);
+
+			/**
+			 * Filters the term color roles — the single source of truth for
+			 * which color slots are available per taxonomy term.
+			 *
+			 * Theme authors can add roles like 'accent', 'accent-dark', 'base', etc.
+			 *
+			 * @since 0.2.0
+			 * @param array<int, array{slug: string, label: string, meta_key: string}> $roles
+			 */
+			$roles = (array) apply_filters( 'gptc_term_color_roles', $defaults );
+
+			// Validate and normalize.
+			$validated = array();
+			foreach ( $roles as $role ) {
+				if (
+					! empty( $role['slug'] ) &&
+					! empty( $role['label'] ) &&
+					! empty( $role['meta_key'] )
+				) {
+					$validated[] = array(
+						'slug'     => sanitize_key( $role['slug'] ),
+						'label'    => sanitize_text_field( $role['label'] ),
+						'meta_key' => sanitize_key( $role['meta_key'] ),
+					);
+				}
+			}
+
+			self::$color_roles_cache = $validated;
+
+			return $validated;
+		}
+
+		/**
+		 * Returns just the meta keys from the registered color roles.
+		 *
+		 * @since  0.2.0
+		 * @return array<int, string>
+		 */
+		public static function get_color_meta_keys(): array {
+			return array_column( self::get_color_roles(), 'meta_key' );
+		}
 
 		/**
 		 * Normalizes a taxonomy slug for use in CSS custom property names.
@@ -174,9 +254,9 @@ if ( ! class_exists( __NAMESPACE__ . '\\Helpers' ) ) {
 		/**
 		 * Resolves term colors for a single taxonomy from a set of terms.
 		 *
-		 * Returns the primary and (optionally) secondary color from the
-		 * first term that has a primary color set — either directly or
-		 * inherited from an ancestor in a hierarchical taxonomy.
+		 * Returns all configured color roles from the first term that has
+		 * at least a primary-role color set — either directly or inherited
+		 * from an ancestor in a hierarchical taxonomy.
 		 *
 		 * @since  0.1.1
 		 * @param  \WP_Term[] $terms          Array of term objects.
@@ -185,19 +265,30 @@ if ( ! class_exists( __NAMESPACE__ . '\\Helpers' ) ) {
 		 */
 		public static function resolve_colors_from_terms( array $terms, string $normalized_tax ): array {
 			$colors = array();
+			$roles  = self::get_color_roles();
+
+			if ( empty( $roles ) ) {
+				return $colors;
+			}
+
+			// The first role is considered the "primary" gatekeeper —
+			// a term must have it (directly or inherited) to be used.
+			$primary_role = $roles[0];
 
 			foreach ( $terms as $term ) {
-				$primary_color = self::get_inherited_term_color( $term, 'term_color' );
+				$primary_color = self::get_inherited_term_color( $term, $primary_role['meta_key'] );
 
 				if ( ! $primary_color ) {
 					continue;
 				}
 
-				$colors[ $normalized_tax . '-primary' ] = sanitize_hex_color( $primary_color );
+				// Resolve all roles for this term.
+				foreach ( $roles as $role ) {
+					$value = self::get_inherited_term_color( $term, $role['meta_key'] );
 
-				$secondary_color = self::get_inherited_term_color( $term, 'term_color_secondary' );
-				if ( $secondary_color ) {
-					$colors[ $normalized_tax . '-secondary' ] = sanitize_hex_color( $secondary_color );
+					if ( $value ) {
+						$colors[ $normalized_tax . '-' . $role['slug'] ] = sanitize_hex_color( $value );
+					}
 				}
 
 				break; // First term with a primary color wins.
@@ -350,15 +441,15 @@ if ( ! class_exists( __NAMESPACE__ . '\\Term_Color_Meta' ) ) {
 		}
 
 		/**
-		 * Registers `term_color` and `term_color_secondary` meta keys
-		 * for each supported taxonomy.
+		 * Registers color meta keys for each supported taxonomy,
+		 * derived from the color roles filter.
 		 *
 		 * @since  0.1.0
 		 * @return void
 		 */
 		public function register_term_color_meta(): void {
 			$taxonomies = Plugin::get_instance()->get_color_taxonomies();
-			$meta_keys  = array( 'term_color', 'term_color_secondary' );
+			$meta_keys  = Helpers::get_color_meta_keys();
 
 			foreach ( $taxonomies as $taxonomy ) {
 				foreach ( $meta_keys as $meta_key ) {
@@ -410,7 +501,9 @@ if ( ! class_exists( __NAMESPACE__ . '\\Term_Color_Meta' ) ) {
 		 */
 		public function render_add_term_color_field( string $taxonomy ): void {
 			wp_nonce_field( 'gptc_save_term_color', 'gptc_term_color_nonce' );
-			$this->render_color_field_pair( 'div', '', '' );
+			$roles   = Helpers::get_color_roles();
+			$values  = array_fill_keys( array_column( $roles, 'meta_key' ), '' );
+			$this->render_color_fields( 'div', $values );
 		}
 
 		/**
@@ -421,79 +514,80 @@ if ( ! class_exists( __NAMESPACE__ . '\\Term_Color_Meta' ) ) {
 		 * @return void
 		 */
 		public function render_edit_term_color_field( \WP_Term $term ): void {
-			$color           = get_term_meta( $term->term_id, 'term_color', true );
-			$color_secondary = get_term_meta( $term->term_id, 'term_color_secondary', true );
 			wp_nonce_field( 'gptc_save_term_color', 'gptc_term_color_nonce' );
-			$this->render_color_field_pair( 'tr', $color, $color_secondary );
+			$roles  = Helpers::get_color_roles();
+			$values = array();
+			foreach ( $roles as $role ) {
+				$values[ $role['meta_key'] ] = get_term_meta( $term->term_id, $role['meta_key'], true );
+			}
+			$this->render_color_fields( 'tr', $values );
 		}
 
 		/**
-		 * Renders a pair of color picker fields (primary + secondary).
+		 * Renders color picker fields for all registered color roles.
 		 *
 		 * Adapts the wrapper markup to either the "Add New" form (div)
 		 * or the "Edit" form (table row).
 		 *
-		 * @since  0.1.1
-		 * @param  string $wrapper 'div' for add-form, 'tr' for edit-form.
-		 * @param  string $primary_value   Current primary hex value.
-		 * @param  string $secondary_value Current secondary hex value.
+		 * @since  0.2.0
+		 * @param  string               $wrapper 'div' for add-form, 'tr' for edit-form.
+		 * @param  array<string, string> $values  Map of meta_key => current value.
 		 * @return void
 		 */
-		private function render_color_field_pair( string $wrapper, string $primary_value, string $secondary_value ): void {
-			$fields = array(
-				array(
-					'id'    => 'gptc-term-color',
-					'name'  => 'term_color',
-					'label' => __( 'Term Color (Primary)', 'gatherpress-taxonomy-colors' ),
-					'desc'  => __( 'Primary color for this term. Available as the "Term Color (Primary)" design token in the block editor.', 'gatherpress-taxonomy-colors' ),
-					'value' => $primary_value,
-				),
-				array(
-					'id'    => 'gptc-term-color-secondary',
-					'name'  => 'term_color_secondary',
-					'label' => __( 'Term Color (Secondary)', 'gatherpress-taxonomy-colors' ),
-					'desc'  => __( 'Secondary color for this term. Available as the "Term Color (Secondary)" design token in the block editor.', 'gatherpress-taxonomy-colors' ),
-					'value' => $secondary_value,
-				),
-			);
+		private function render_color_fields( string $wrapper, array $values ): void {
+			$roles = Helpers::get_color_roles();
 
-			foreach ( $fields as $field ) {
+			foreach ( $roles as $role ) {
+				$field_id = 'gptc-term-color-' . $role['slug'];
+				$name     = $role['meta_key'];
+				$label    = sprintf(
+					/* translators: %s: role label, e.g. "Primary" */
+					__( 'Term Color (%s)', 'gatherpress-taxonomy-colors' ),
+					$role['label']
+				);
+				$desc = sprintf(
+					/* translators: %s: role label, e.g. "Primary" */
+					__( '%s color for this term. Available as a design token in the block editor.', 'gatherpress-taxonomy-colors' ),
+					$role['label']
+				);
+				$value = $values[ $name ] ?? '';
+
 				if ( 'tr' === $wrapper ) {
 					?>
 					<tr class="form-field">
 						<th scope="row">
-							<label for="<?php echo esc_attr( $field['id'] ); ?>">
-								<?php echo esc_html( $field['label'] ); ?>
+							<label for="<?php echo esc_attr( $field_id ); ?>">
+								<?php echo esc_html( $label ); ?>
 							</label>
 						</th>
 						<td>
 							<input
 								type="text"
-								id="<?php echo esc_attr( $field['id'] ); ?>"
-								name="<?php echo esc_attr( $field['name'] ); ?>"
-								value="<?php echo esc_attr( $field['value'] ); ?>"
+								id="<?php echo esc_attr( $field_id ); ?>"
+								name="<?php echo esc_attr( $name ); ?>"
+								value="<?php echo esc_attr( $value ); ?>"
 								class="gptc-color-field"
 								data-default-color=""
 							/>
-							<p class="description"><?php echo esc_html( $field['desc'] ); ?></p>
+							<p class="description"><?php echo esc_html( $desc ); ?></p>
 						</td>
 					</tr>
 					<?php
 				} else {
 					?>
 					<div class="form-field">
-						<label for="<?php echo esc_attr( $field['id'] ); ?>">
-							<?php echo esc_html( $field['label'] ); ?>
+						<label for="<?php echo esc_attr( $field_id ); ?>">
+							<?php echo esc_html( $label ); ?>
 						</label>
 						<input
 							type="text"
-							id="<?php echo esc_attr( $field['id'] ); ?>"
-							name="<?php echo esc_attr( $field['name'] ); ?>"
-							value="<?php echo esc_attr( $field['value'] ); ?>"
+							id="<?php echo esc_attr( $field_id ); ?>"
+							name="<?php echo esc_attr( $name ); ?>"
+							value="<?php echo esc_attr( $value ); ?>"
 							class="gptc-color-field"
 							data-default-color=""
 						/>
-						<p class="description"><?php echo esc_html( $field['desc'] ); ?></p>
+						<p class="description"><?php echo esc_html( $desc ); ?></p>
 					</div>
 					<?php
 				}
@@ -544,7 +638,7 @@ if ( ! class_exists( __NAMESPACE__ . '\\Term_Color_Meta' ) ) {
 				return;
 			}
 
-			$meta_keys = array( 'term_color', 'term_color_secondary' );
+			$meta_keys = Helpers::get_color_meta_keys();
 
 			foreach ( $meta_keys as $meta_key ) {
 				$value = isset( $_POST[ $meta_key ] )
@@ -614,12 +708,14 @@ if ( ! class_exists( __NAMESPACE__ . '\\Term_Color_Meta' ) ) {
 				return $content;
 			}
 
-			$primary   = get_term_meta( $term_id, 'term_color', true );
-			$secondary = get_term_meta( $term_id, 'term_color_secondary', true );
+			$roles  = Helpers::get_color_roles();
+			$output = '<span style="display:inline-flex;align-items:center;gap:6px;">';
 
-			$output  = '<span style="display:inline-flex;align-items:center;gap:6px;">';
-			$output .= $this->render_color_swatch( $primary, __( 'Primary', 'gatherpress-taxonomy-colors' ) );
-			$output .= $this->render_color_swatch( $secondary, __( 'Secondary', 'gatherpress-taxonomy-colors' ) );
+			foreach ( $roles as $role ) {
+				$color   = get_term_meta( $term_id, $role['meta_key'], true );
+				$output .= $this->render_color_swatch( $color, $role['label'] );
+			}
+
 			$output .= '</span>';
 
 			return $output;
@@ -715,74 +811,62 @@ if ( ! class_exists( __NAMESPACE__ . '\\Term_Color_Tokens' ) ) {
 		}
 
 		/**
-		 * Returns the abstract term color slot definitions — one pair per taxonomy.
+		 * Returns the abstract term color slot definitions — one slot per
+		 * role per taxonomy.
 		 *
 		 * Only includes slots for taxonomies that are currently registered.
-		 * This prevents phantom palette entries when a taxonomy slug is in
-		 * the filter but the taxonomy itself doesn't exist yet (e.g., a
-		 * shadow taxonomy whose plugin isn't active).
 		 *
 		 * @since  0.1.0
 		 * @return array<int, array{slug: string, name: string, property: string, fallback: string, taxonomy: string, meta_key: string}>
 		 */
 		public function get_term_color_slots(): array {
 			$taxonomies = Plugin::get_instance()->get_color_taxonomies();
+			$roles      = Helpers::get_color_roles();
 			$slots      = array();
 
-			$fallback_pairs = array(
-				array( 'primary' => '#8b7e74', 'secondary' => '#b8aea6' ),
-				array( 'primary' => '#6e7f8d', 'secondary' => '#a3b1bc' ),
-				array( 'primary' => '#7b8471', 'secondary' => '#a9b2a1' ),
-				array( 'primary' => '#8d7487', 'secondary' => '#b8a3b3' ),
-				array( 'primary' => '#8a7d5a', 'secondary' => '#b5ac8e' ),
-				array( 'primary' => '#5f7e8a', 'secondary' => '#96b1bc' ),
-			);
+			// Base fallback hues per taxonomy index for deterministic neutral colors.
+			$base_hues = array( 30, 200, 100, 300, 50, 180 );
 
-			$roles = array(
-				'primary'   => array( 'meta_key' => 'term_color' ),
-				'secondary' => array( 'meta_key' => 'term_color_secondary' ),
-			);
-
-			foreach ( $taxonomies as $index => $taxonomy ) {
+			foreach ( $taxonomies as $tax_index => $taxonomy ) {
 				$tax_object = get_taxonomy( $taxonomy );
 
-				// Skip taxonomies that are not registered — avoids injecting
-				// palette entries for slugs whose taxonomy doesn't exist yet.
 				if ( ! $tax_object ) {
 					continue;
 				}
 
-				$tax_label = $tax_object->labels->singular_name;
-
-				if ( isset( $fallback_pairs[ $index ] ) ) {
-					$fallbacks = $fallback_pairs[ $index ];
-				} else {
-					$hash     = abs( crc32( $taxonomy ) );
-					$hue      = $hash % 360;
-					$fallbacks = array(
-						'primary'   => self::hsl_to_hex( $hue, 15, 50 ),
-						'secondary' => self::hsl_to_hex( $hue, 12, 68 ),
-					);
-				}
-
+				$tax_label      = $tax_object->labels->singular_name;
 				$normalized_tax = Helpers::normalize_taxonomy_slug( $taxonomy );
 
-				foreach ( $roles as $role => $role_data ) {
+				// Determine a base hue for this taxonomy.
+				if ( isset( $base_hues[ $tax_index ] ) ) {
+					$base_hue = $base_hues[ $tax_index ];
+				} else {
+					$base_hue = abs( crc32( $taxonomy ) ) % 360;
+				}
+
+				foreach ( $roles as $role_index => $role ) {
+					// Generate a unique muted fallback per role.
+					// Primary roles get slightly more saturated/darker fallbacks.
+					$saturation = max( 8, 15 - ( $role_index * 3 ) );
+					$lightness  = min( 75, 50 + ( $role_index * 10 ) );
+					$fallback   = self::hsl_to_hex( $base_hue, $saturation, $lightness );
+
 					$slots[] = array(
-						'slug'     => $normalized_tax . '-' . $role,
+						'slug'     => $normalized_tax . '-' . $role['slug'],
 						'name'     => sprintf(
-							/* translators: 1: taxonomy label, 2: role (Primary/Secondary) */
+							/* translators: 1: taxonomy label, 2: role label (Primary/Secondary/etc.) */
 							__( '%1$s Color (%2$s)', 'gatherpress-taxonomy-colors' ),
 							$tax_label,
-							ucfirst( $role )
+							$role['label']
 						),
-						'property' => '--flavor--' . $normalized_tax . '-' . $role,
-						'fallback' => $fallbacks[ $role ],
+						'property' => '--flavor--' . $normalized_tax . '-' . $role['slug'],
+						'fallback' => $fallback,
 						'taxonomy' => $taxonomy,
-						'meta_key' => $role_data['meta_key'],
+						'meta_key' => $role['meta_key'],
 					);
 				}
 			}
+
 			/**
 			 * Filters the term color design token slot definitions.
 			 *
@@ -823,7 +907,6 @@ if ( ! class_exists( __NAMESPACE__ . '\\Term_Color_Tokens' ) ) {
 			$properties = array();
 
 			foreach ( $this->get_term_color_slots() as $slot ) {
-				// $prop_name  = '--wp--preset--color--' . esc_attr( sanitize_key( $slot['slug'] ) );
 				$prop_name  = '--wp--preset--color--' . esc_attr( $slot['slug'] );
 				$prop_value = sprintf(
 					'var(%s, %s)',
@@ -978,7 +1061,7 @@ if ( ! class_exists( __NAMESPACE__ . '\\Term_Color_Resolver' ) ) {
 				return (int) $post_id;
 			}
 
-			// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Read-only; no state change.
+			// phpcs:ignore WordPress.Security.NonceVerification.Recommended
 			if ( ! empty( $_GET['post'] ) ) {
 				// phpcs:ignore WordPress.Security.NonceVerification.Recommended
 				$post_id = absint( $_GET['post'] );
@@ -998,7 +1081,7 @@ if ( ! class_exists( __NAMESPACE__ . '\\Term_Color_Resolver' ) ) {
 		}
 
 		/**
-		 * Resolves term colors for the current frontend context — per taxonomy.
+		 * Resolves term colors for the current frontend context.
 		 *
 		 * @since  0.1.0
 		 * @return array<string, string> Map of slot slug to sanitized hex color.
@@ -1021,7 +1104,7 @@ if ( ! class_exists( __NAMESPACE__ . '\\Term_Color_Resolver' ) ) {
 		}
 
 		/**
-		 * Resolves term colors for a specific post ID — per taxonomy.
+		 * Resolves term colors for a specific post ID.
 		 *
 		 * @since  0.1.0
 		 * @param  int $post_id The post ID to resolve colors for.
@@ -1042,7 +1125,6 @@ if ( ! class_exists( __NAMESPACE__ . '\\Term_Color_Resolver' ) ) {
 			$properties = array();
 
 			foreach ( $colors as $slot => $hex ) {
-				// $properties[ '--flavor--' . esc_attr( ltrim( $slot, "-" ) ) ] = esc_attr( $hex );
 				$properties[ '--flavor--' . esc_attr( $slot ) ] = esc_attr( $hex );
 			}
 
@@ -1322,6 +1404,7 @@ if ( ! class_exists( __NAMESPACE__ . '\\Term_Color_Scoper' ) ) {
 
 			$normalized_tax = Helpers::normalize_taxonomy_slug( $taxonomy );
 			$slot_lookup    = $this->get_slot_lookup();
+			$roles          = Helpers::get_color_roles();
 
 			$term_color_map = array();
 
@@ -1332,20 +1415,25 @@ if ( ! class_exists( __NAMESPACE__ . '\\Term_Color_Scoper' ) ) {
 					continue;
 				}
 
-				$primary   = get_term_meta( $term->term_id, 'term_color', true );
-				$secondary = get_term_meta( $term->term_id, 'term_color_secondary', true );
+				$has_any_color = false;
+				$term_colors   = array();
 
-				if ( ! $primary && ! $secondary ) {
+				foreach ( $roles as $role ) {
+					$color = get_term_meta( $term->term_id, $role['meta_key'], true );
+					if ( $color ) {
+						$term_colors[ $role['slug'] ] = sanitize_hex_color( $color );
+						$has_any_color                = true;
+					}
+				}
+
+				if ( ! $has_any_color ) {
 					continue;
 				}
 
 				$parsed_path = wp_parse_url( $term_link, PHP_URL_PATH );
 				$normal_key  = $parsed_path ? untrailingslashit( $parsed_path ) : untrailingslashit( $term_link );
 
-				$term_color_map[ $normal_key ] = array(
-					'primary'   => $primary ? sanitize_hex_color( $primary ) : '',
-					'secondary' => $secondary ? sanitize_hex_color( $secondary ) : '',
-				);
+				$term_color_map[ $normal_key ] = $term_colors;
 			}
 
 			if ( empty( $term_color_map ) ) {
@@ -1368,16 +1456,11 @@ if ( ! class_exists( __NAMESPACE__ . '\\Term_Color_Scoper' ) ) {
 					continue;
 				}
 
-				$colors = $term_color_map[ $normal_key ];
-
+				$colors   = $term_color_map[ $normal_key ];
 				$resolved = array();
 
-				if ( $colors['primary'] ) {
-					$resolved[ $normalized_tax . '-primary' ] = $colors['primary'];
-				}
-
-				if ( $colors['secondary'] ) {
-					$resolved[ $normalized_tax . '-secondary' ] = $colors['secondary'];
+				foreach ( $colors as $role_slug => $hex ) {
+					$resolved[ $normalized_tax . '-' . $role_slug ] = $hex;
 				}
 
 				if ( empty( $resolved ) ) {
@@ -1419,7 +1502,7 @@ if ( ! class_exists( __NAMESPACE__ . '\\Shadow_Taxonomy_Support' ) ) {
 		use Singleton;
 
 		/**
-		 * Confirmed shadow-source post type slugs (e.g. 'venue', 'topic').
+		 * Confirmed shadow-source post type slugs.
 		 *
 		 * @since 0.1.2
 		 * @var array<string, string> Map of post type slug => shadow taxonomy slug.
@@ -1600,34 +1683,41 @@ if ( ! class_exists( __NAMESPACE__ . '\\Shadow_Taxonomy_Support' ) ) {
 		}
 
 		/**
-		 * Enqueues the shadow taxonomy config as an inline script
-		 * so the JS sidebar panel knows which post types are shadow sources.
+		 * Enqueues the shadow taxonomy config and color roles as inline scripts
+		 * so the JS sidebar panel knows which post types are shadow sources
+		 * and which color roles are available.
 		 *
 		 * @since  0.1.3
 		 * @return void
 		 */
 		public function enqueue_shadow_config_script(): void {
-			$map = $this->get_shadow_source_post_types();
-
-			if ( empty( $map ) ) {
-				return;
-			}
-
-			// The editor script handle is generated from the block name.
 			$handle = 'gatherpress-taxonomy-colors-editor-script';
 
-			// Build a safe JSON map of post_type => taxonomy_slug.
-			$json = wp_json_encode( $map );
+			// Always provide color roles to the editor.
+			$roles_json = wp_json_encode( Helpers::get_color_roles() );
 
-			if ( false === $json ) {
-				return;
+			if ( false !== $roles_json ) {
+				wp_add_inline_script(
+					$handle,
+					sprintf( 'window.gptcColorRoles = %s;', $roles_json ),
+					'before'
+				);
 			}
 
-			wp_add_inline_script(
-				$handle,
-				sprintf( 'window.gptcShadowConfig = %s;', $json ),
-				'before'
-			);
+			// Shadow config is only needed when shadow taxonomies exist.
+			$map = $this->get_shadow_source_post_types();
+
+			if ( ! empty( $map ) ) {
+				$json = wp_json_encode( $map );
+
+				if ( false !== $json ) {
+					wp_add_inline_script(
+						$handle,
+						sprintf( 'window.gptcShadowConfig = %s;', $json ),
+						'before'
+					);
+				}
+			}
 		}
 
 		/**
@@ -1693,16 +1783,15 @@ if ( ! class_exists( __NAMESPACE__ . '\\Shadow_Taxonomy_Support' ) ) {
 				return;
 			}
 
-			$term = $this->resolve_shadow_term( $post, $shadow_taxonomy );
-
-			$primary   = $term ? get_term_meta( $term->term_id, 'term_color', true ) : '';
-			$secondary = $term ? get_term_meta( $term->term_id, 'term_color_secondary', true ) : '';
-
-			$size = '20px';
+			$term  = $this->resolve_shadow_term( $post, $shadow_taxonomy );
+			$roles = Helpers::get_color_roles();
+			$size  = '20px';
 
 			echo '<span style="display:inline-flex;align-items:center;gap:4px;">';
-			echo $this->render_admin_swatch( $primary, __( 'Primary', 'gatherpress-taxonomy-colors' ), $size ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Escaped in render_admin_swatch.
-			echo $this->render_admin_swatch( $secondary, __( 'Secondary', 'gatherpress-taxonomy-colors' ), $size ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Escaped in render_admin_swatch.
+			foreach ( $roles as $role ) {
+				$color = $term ? get_term_meta( $term->term_id, $role['meta_key'], true ) : '';
+				echo $this->render_admin_swatch( $color, $role['label'], $size ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+			}
 			echo '</span>';
 		}
 

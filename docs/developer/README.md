@@ -49,23 +49,49 @@ Some architectures use a **shadow taxonomy** pattern: a hidden taxonomy where ea
 
 ---
 
+## Color Roles — Single Source of Truth
+
+Before diving into the layers, it's important to understand the **color roles** system. The number and identity of color slots per term is not hardcoded — it's controlled by a single filter:
+
+```php
+add_filter( 'gptc_term_color_roles', function ( $roles ) {
+    $roles[] = array(
+        'slug'     => 'accent',
+        'label'    => 'Accent',
+        'meta_key' => 'term_color_accent',
+    );
+    return $roles;
+} );
+```
+
+The default roles are `primary` (meta key: `term_color`) and `secondary` (meta key: `term_color_secondary`). Theme authors can add `base`, `accent`, `accent-dark`, or any custom role. Every layer in the architecture derives its behavior from this filter:
+
+- **Layer 1** registers N meta keys (one per role) per taxonomy.
+- **Layer 2** generates N design token slots per taxonomy (one per role).
+- **Layers 3–5** resolve and inject N `--flavor--{taxonomy}-{role}` custom properties.
+- **Admin UI** renders N color picker fields on term edit screens and N swatches in list tables.
+- **Shadow panel (JS)** renders N color rows dynamically.
+
+---
+
 ## Layer 1 – Term Meta for Color Storage
 
-*The data layer. Each term gets a primary and secondary color stored as term meta.*
+*The data layer. Each term gets one color per registered role stored as term meta.*
 
-This is the data layer. Each term gets a color stored as term meta. WordPress has supported term meta since version 4.4 via `add_term_meta()`, `get_term_meta()`, and `update_term_meta()`. This is the canonical, core-blessed way to store additional data on taxonomy terms.
+This is the data layer. Each term gets colors stored as term meta — one meta key per color role defined by the `gptc_term_color_roles` filter. WordPress has supported term meta since version 4.4 via `add_term_meta()`, `get_term_meta()`, and `update_term_meta()`. This is the canonical, core-blessed way to store additional data on taxonomy terms.
 
-For each taxonomy you want to color-code, register two meta keys — `term_color` (primary) and `term_color_secondary` — using `register_term_meta()`. This function accepts a schema definition and, critically, a `show_in_rest` flag that exposes the value to the block editor via the REST API.
+For each taxonomy you want to color-code, the plugin registers one meta key per color role using `register_term_meta()`. By default this means `term_color` (primary) and `term_color_secondary` (secondary), but a theme can add `term_color_accent`, `term_color_base`, etc. via the roles filter. Each registration accepts a schema definition and a `show_in_rest` flag that exposes the value to the block editor via the REST API.
 
 > **Why register_term_meta with show_in_rest?** This is the same pattern core uses for post meta. The REST visibility is essential for the editor integration — it allows the block editor to read term colors without custom endpoints.
 
 ### Implementation Checklist
 
-- ✅ `register_term_meta()` for both `term_color` and `term_color_secondary` with `show_in_rest`, `sanitize_hex_color` callback, and `single => true` for all configurable taxonomies.
+- ✅ `register_term_meta()` for each meta key defined by `gptc_term_color_roles` (default: `term_color`, `term_color_secondary`) with `show_in_rest`, `sanitize_hex_color` callback, and `single => true` for all configurable taxonomies.
+- ✅ Filterable color roles via `gptc_term_color_roles` filter — theme authors can add `accent`, `base`, `accent-dark`, etc.
 - ✅ Filterable taxonomy list via `gptc_term_color_taxonomies` filter (defaults to `category` and `post_tag`).
-- ✅ Primary and secondary color picker fields on both the "Add New Term" and "Edit Term" admin forms.
-- ✅ Save handlers for term creation and edits with nonce verification and capability checks.
-- ✅ Color swatch column in the taxonomy list table showing both primary and secondary colors.
+- ✅ Dynamic color picker fields (one per role) on both the "Add New Term" and "Edit Term" admin forms.
+- ✅ Save handlers for term creation and edits with nonce verification and capability checks — loops over all role meta keys.
+- ✅ Color swatch column in the taxonomy list table showing one swatch per registered role.
 - ✅ `wp-color-picker` assets enqueued only on relevant admin screens.
 - ✅ Layer 2: Per-taxonomy abstract design token slots in `theme.json`.
 - ✅ Layer 3: Per-taxonomy frontend CSS custom property injection.
@@ -214,7 +240,7 @@ Both coexist naturally. The global injection (Layer 3) sets the "page-level" con
 
 - ⬜ **Editor Query Loop preview**: Extend Layer 4 to detect Query Loop blocks in the site editor and inject scoped styles per preview post.
 - ⬜ **REST API endpoint**: Expose a `/wp-json/gptc/v1/term-colors/{post_id}` endpoint so JavaScript-driven UIs (e.g., AJAX pagination, Infinite Scroll) can fetch resolved colors per post without a full page reload.
-- ⬜ **Tertiary / accent slots**: Allow more than two color roles per taxonomy via the `gptc_term_color_slots` filter — e.g., a "tertiary" or "accent" slot for richer color schemes.
+- ✅ **Flexible color roles**: The `gptc_term_color_roles` filter allows any number of color roles per taxonomy — e.g., `primary`, `secondary`, `accent`, `base`, `accent-dark`. All layers derive from this single source of truth.
 - ✅ **Color inheritance**: When a child term has no color, the system walks up the parent chain for hierarchical taxonomies (e.g., categories) until it finds a term with a color set. A "Web Development" subcategory with no color inherits from "Technology". Non-hierarchical taxonomies (tags) are unaffected. Depth-limited to 10 ancestor levels.
 - ⬜ **Gutenberg sidebar panel**: A custom sidebar panel in the post editor showing which term colors are currently active, with quick links to edit the source terms.
 - ⬜ **WooCommerce integration**: Extend `gptc_term_color_taxonomies` to include `product_cat` and `product_tag`, making product category colors available as design tokens in shop templates.

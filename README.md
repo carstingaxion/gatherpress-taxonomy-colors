@@ -27,8 +27,8 @@ GatherPress Taxonomy Colors turns term colors into first-class WordPress design 
 
 The plugin implements a 6-layer architecture that integrates with WordPress's existing design token system:
 
-1. **Term Meta** — Primary and secondary colors stored as term meta via `register_term_meta()` with full REST API visibility.
-2. **Design Tokens** — Abstract color slots injected into `theme.json` per taxonomy, with CSS custom property indirection to work around core's palette sanitizer.
+1. **Term Meta** — Colors stored as term meta via `register_term_meta()` with full REST API visibility. The number of color roles is fully flexible via the `gptc_term_color_roles` filter (defaults to primary + secondary).
+2. **Design Tokens** — Abstract color slots injected into `theme.json` per taxonomy per role, with CSS custom property indirection to work around core's palette sanitizer.
 3. **Frontend Resolution** — Contextual `--flavor--` custom properties on `:root` based on the current post's terms or the queried archive term.
 4. **Editor Resolution** — The same colors resolve inside the block editor when editing a post, so color picker swatches match the frontend.
 5. **Scoped Resolution** — In Query Loop and archive contexts, per-post colors are scoped directly onto each `<li>` element via `WP_HTML_Tag_Processor` — no wrapper divs, no broken grid layouts.
@@ -40,7 +40,8 @@ The plugin implements a 6-layer architecture that integrates with WordPress's ex
 - **Per-taxonomy slots** — A post in category "Technology" (blue) and tagged "Breaking" (red) resolves both colors independently.
 - **Query Loop aware** — Each post in a Query Loop renders with its own term colors, not just the last one resolved.
 - **Shadow taxonomy support** — Works with GatherPress's shadow taxonomy pattern for post types acting as quasi-taxonomies.
-- **Fully filterable** — `gptc_term_color_taxonomies` controls which taxonomies participate. `gptc_term_color_slots` controls the design token definitions.
+- **Flexible color roles** — The `gptc_term_color_roles` filter lets theme authors define any number of color roles per term (e.g., `primary`, `secondary`, `accent`, `base`). All layers derive from this single source of truth.
+- **Fully filterable** — `gptc_term_color_taxonomies` controls which taxonomies participate. `gptc_term_color_slots` controls the design token definitions. `gptc_term_color_roles` controls color roles per term.
 - **Zero configuration** — Install, activate, and assign colors to your terms. The design tokens are generated automatically.
 
 ## Installation
@@ -62,6 +63,28 @@ add_filter( 'gptc_term_color_taxonomies', function ( $taxonomies ) {
     return $taxonomies;
 } );
 ```
+
+### Can I add more than two colors per term?
+
+Yes. Use the `gptc_term_color_roles` filter to define additional color roles:
+
+```php
+add_filter( 'gptc_term_color_roles', function ( $roles ) {
+    $roles[] = array(
+        'slug'     => 'accent',
+        'label'    => 'Accent',
+        'meta_key' => 'term_color_accent',
+    );
+    $roles[] = array(
+        'slug'     => 'accent-dark',
+        'label'    => 'Accent Dark',
+        'meta_key' => 'term_color_accent_dark',
+    );
+    return $roles;
+} );
+```
+
+Each role gets its own term meta key, design token slot, and CSS custom property — all generated automatically.
 
 ### How do I use term colors in my blocks?
 
