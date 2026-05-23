@@ -8,6 +8,13 @@
 	"login": true,
 	"steps": [
     {
+      "step": "setSiteOptions",
+      "options": {
+        "blogname": "GatherPress Taxonomy Colors",
+        "blogdescription": "Enhancing GatherPress with Taxonomy Colors."
+      }
+    },
+    {
       "step": "installPlugin",
       "pluginData": {
         "resource": "git:directory",
