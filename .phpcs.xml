@@ -1,0 +1,42 @@
+<?xml version="1.0"?>
+<ruleset name="gatherpress-taxonomy-colors">
+	<description>Coding standards for gatherpress-taxonomy-colors</description>
+
+	<file>.</file>
+	<arg name="basepath" value="./"/><!-- Strip the file paths down to the relevant bit -->
+
+	<exclude-pattern>*/build/*</exclude-pattern>
+	<exclude-pattern>*/vendor/*</exclude-pattern>
+
+	<exclude-pattern>*/wp-content/*</exclude-pattern>
+	<exclude-pattern>.wordpress-org/*</exclude-pattern>
+
+	<!-- Rules: figuren.theater Coding Standards -->
+	<rule ref="figurentheater" />
+
+	<!-- Allow additional text_domains -->
+	<rule ref="WordPress.WP.I18n">
+		<properties>
+			<property name="text_domain" type="array">
+				<element value="gatherpress-taxonomy-colors"/>
+			</property>
+		</properties>
+	</rule>
+
+	<rule ref="WordPress.NamingConventions.PrefixAllGlobals">
+		<properties>
+			<property name="prefixes" type="array">
+				<element value="gptc_"/>
+				<element value="GatherpressTaxonomyColors"/>
+				<element value="__NAMESPACE__"/>
+			</property>
+
+		</properties>
+	</rule>
+	<rule ref="WordPress">
+		<exclude name="WordPress.Files.FileName.InvalidClassFileName" />
+		<exclude name="Universal.PHP.RequireExitDieParentheses.Missing" />
+		<exclude name="Universal.Classes.RequireFinalClass.NonFinalClassFound" />
+		<exclude name="Universal.Files.SeparateFunctionsFromOO.Mixed" />
+	</rule>
+</ruleset>
