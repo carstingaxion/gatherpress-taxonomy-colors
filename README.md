@@ -43,10 +43,6 @@ The plugin implements a 6-layer architecture that integrates with WordPress's ex
 - **Fully filterable** — `gptc_term_color_taxonomies` controls which taxonomies participate. `gptc_term_color_slots` controls the design token definitions.
 - **Zero configuration** — Install, activate, and assign colors to your terms. The design tokens are generated automatically.
 
-### Included Block
-
-The plugin includes a **Taxonomy Color Roadmap** block — an interactive, collapsible reference document that explains the full 6-layer architecture with implementation checklists and code examples. Useful for developers evaluating or extending the system.
-
 ## Installation
 
 1. Upload the `gatherpress-taxonomy-colors` folder to `/wp-content/plugins/`.
