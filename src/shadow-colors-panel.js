@@ -102,12 +102,12 @@ function ColorRow( { label, value, onChange, colors } ) {
 								focusable="false"
 							>
 								<line
-									x1="5"
-									y1="5"
-									x2="19"
-									y2="19"
-									stroke="rgba(207, 0, 0, 0.7)"
-									strokeWidth="2"
+									x1="4"
+									y1="20"
+									x2="20"
+									y2="4"
+									stroke="#ccc"
+									strokeWidth="1"
 								/>
 							</svg>
 						</span>
