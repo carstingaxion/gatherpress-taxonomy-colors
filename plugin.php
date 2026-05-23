@@ -130,7 +130,9 @@ if ( ! class_exists( __NAMESPACE__ . '\\Helpers' ) ) {
 			);
 
 			/**
-			 * Filters the term color roles — the single source of truth for
+			 * Filters the term color roles (or amount of colors).
+			 *
+			 * This is the single source of truth for
 			 * which color slots are available per taxonomy term.
 			 *
 			 * Each role is an associative array with three required keys:
