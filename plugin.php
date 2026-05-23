@@ -1800,7 +1800,7 @@ if ( ! class_exists( __NAMESPACE__ . '\\Plugin' ) ) {
 			 */
 			return (array) apply_filters(
 				'gptc_term_color_taxonomies',
-				array( '_gatherpress_play', 'post_tag' )
+				array( '_gatherpress_play', 'post_tag', 'category' )
 			);
 		}
 	}
