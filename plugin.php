@@ -133,10 +133,76 @@ if ( ! class_exists( __NAMESPACE__ . '\\Helpers' ) ) {
 			 * Filters the term color roles — the single source of truth for
 			 * which color slots are available per taxonomy term.
 			 *
-			 * Theme authors can add roles like 'accent', 'accent-dark', 'base', etc.
+			 * Each role is an associative array with three required keys:
+			 *
+			 * - **`slug`** *(string)* — Unique identifier used in CSS custom property
+			 *   names and design token slugs. Must be a valid CSS identifier fragment
+			 *   (lowercase, hyphens allowed). Examples: `'primary'`, `'accent-dark'`.
+			 * - **`label`** *(string)* — Human-readable label shown in the admin color
+			 *   picker fields, list table swatch tooltips, and the editor sidebar
+			 *   panel. Translatable.
+			 * - **`meta_key`** *(string)* — The `term_meta` key used to store and
+			 *   retrieve the hex color value. Must be unique across all roles.
+			 *   Registered automatically via `register_term_meta()` with
+			 *   `sanitize_hex_color` and `show_in_rest`.
+			 *
+			 * The default roles are `primary` (`term_color`) and `secondary`
+			 * (`term_color_secondary`). Every layer in the architecture derives
+			 * its behavior from this filter:
+			 *
+			 * - **Layer 1** registers one meta key per role per taxonomy.
+			 * - **Layer 2** generates one design token slot per role per taxonomy.
+			 * - **Layers 3–5** resolve and inject `--flavor--{taxonomy}-{role}` CSS
+			 *   custom properties.
+			 * - **Admin UI** renders one color picker field per role on term edit
+			 *   screens and one swatch per role in list table columns.
+			 * - **Shadow panel (JS)** renders one color row per role dynamically.
+			 *
+			 * Roles are validated after filtering: entries missing any of the three
+			 * required keys are silently dropped. Values are sanitized via
+			 * `sanitize_key()` (slug, meta_key) and `sanitize_text_field()` (label).
 			 *
 			 * @since 0.2.0
-			 * @param array<int, array{slug: string, label: string, meta_key: string}> $roles
+			 *
+			 * @param array<int, array{slug: string, label: string, meta_key: string}> $roles {
+			 *     Array of color role definitions.
+			 *
+			 *     @type string $slug     Unique role identifier for CSS and token slugs.
+			 *     @type string $label    Human-readable label for admin UI and editor.
+			 *     @type string $meta_key Term meta key for storing the hex color value.
+			 * }
+			 *
+			 * @example
+			 * ```php
+			 * // Add an "accent" and "accent-dark" role to every taxonomy term.
+			 * add_filter( 'gptc_term_color_roles', function ( array $roles ): array {
+			 *     $roles[] = array(
+			 *         'slug'     => 'accent',
+			 *         'label'    => __( 'Accent', 'my-theme' ),
+			 *         'meta_key' => 'term_color_accent',
+			 *     );
+			 *     $roles[] = array(
+			 *         'slug'     => 'accent-dark',
+			 *         'label'    => __( 'Accent Dark', 'my-theme' ),
+			 *         'meta_key' => 'term_color_accent_dark',
+			 *     );
+			 *     return $roles;
+			 * } );
+			 * ```
+			 *
+			 * @example
+			 * ```php
+			 * // Replace the defaults entirely with a single "base" role.
+			 * add_filter( 'gptc_term_color_roles', function (): array {
+			 *     return array(
+			 *         array(
+			 *             'slug'     => 'base',
+			 *             'label'    => __( 'Base', 'my-theme' ),
+			 *             'meta_key' => 'term_color_base',
+			 *         ),
+			 *     );
+			 * } );
+			 * ```
 			 */
 			$roles = (array) apply_filters( 'gptc_term_color_roles', $defaults );
 
@@ -869,13 +935,96 @@ if ( ! class_exists( __NAMESPACE__ . '\\Term_Color_Tokens' ) ) {
 				}
 			}
 
-			/**
-			 * Filters the term color design token slot definitions.
-			 *
-			 * @since 0.1.0
-			 * @param array<int, array{slug: string, name: string, property: string, fallback: string, taxonomy: string, meta_key: string}> $slots
-			 */
-			return (array) apply_filters( 'gptc_term_color_slots', $slots );
+					/**
+		 * Filters the term color design token slot definitions.
+		 *
+		 * Each slot represents one entry in the `theme.json` color palette
+		 * and one CSS custom property pair (`--wp--preset--color--{slug}` and
+		 * `--flavor--{slug}`). Slots are generated automatically from the
+		 * cartesian product of **color-enabled taxonomies**
+		 * (`gptc_term_color_taxonomies`) × **color roles**
+		 * (`gptc_term_color_roles`).
+		 *
+		 * Use this filter to:
+		 *
+		 * - **Add** extra slots beyond what the automatic generation provides
+		 *   (e.g., a composite "brand" slot that merges multiple taxonomies).
+		 * - **Remove** specific slots for taxonomies that should not appear in
+		 *   the editor palette.
+		 * - **Change fallback colors** to match your theme's neutral palette.
+		 * - **Rename** slot labels for editor UX clarity.
+		 *
+		 * Each slot array contains:
+		 *
+		 * - **`slug`** *(string)* — Unique identifier used as the `theme.json`
+		 *   palette slug and in the CSS custom property name. Format:
+		 *   `{normalized-taxonomy}-{role-slug}`, e.g. `category-primary`.
+		 * - **`name`** *(string)* — Human-readable label shown in the editor
+		 *   color picker, e.g. "Category Color (Primary)".
+		 * - **`property`** *(string)* — The intermediate CSS custom property
+		 *   name, e.g. `--flavor--category-primary`. This is the property
+		 *   that contextual resolution (Layers 3–5) sets to the actual hex.
+		 * - **`fallback`** *(string)* — Hex color used as the `theme.json`
+		 *   palette `color` value and as the `var()` fallback in the CSS
+		 *   override. Shown when no term color resolves for the context.
+		 * - **`taxonomy`** *(string)* — The raw taxonomy slug this slot
+		 *   belongs to. Used for resolution traceability.
+		 * - **`meta_key`** *(string)* — The term meta key that supplies the
+		 *   actual color value, e.g. `term_color`.
+		 *
+		 * @since 0.1.0
+		 *
+		 * @param array<int, array{slug: string, name: string, property: string, fallback: string, taxonomy: string, meta_key: string}> $slots {
+		 *     Array of design token slot definitions.
+		 *
+		 *     @type string $slug     Palette slug / CSS identifier.
+		 *     @type string $name     Human-readable label for the editor.
+		 *     @type string $property Intermediate CSS custom property name.
+		 *     @type string $fallback Hex color fallback value.
+		 *     @type string $taxonomy Raw taxonomy slug.
+		 *     @type string $meta_key Term meta key for the color value.
+		 * }
+		 *
+		 * @example
+		 * ```php
+		 * // Change the fallback color for all category slots to a custom neutral.
+		 * add_filter( 'gptc_term_color_slots', function ( array $slots ): array {
+		 *     foreach ( $slots as &$slot ) {
+		 *         if ( 'category' === $slot['taxonomy'] ) {
+		 *             $slot['fallback'] = '#cccccc';
+		 *         }
+		 *     }
+		 *     return $slots;
+		 * } );
+		 * ```
+		 *
+		 * @example
+		 * ```php
+		 * // Remove all tag slots from the palette (keep only category slots).
+		 * add_filter( 'gptc_term_color_slots', function ( array $slots ): array {
+		 *     return array_values( array_filter( $slots, function ( $slot ) {
+		 *         return 'post_tag' !== $slot['taxonomy'];
+		 *     } ) );
+		 * } );
+		 * ```
+		 *
+		 * @example
+		 * ```php
+		 * // Add a custom composite slot that doesn't map to a specific taxonomy.
+		 * add_filter( 'gptc_term_color_slots', function ( array $slots ): array {
+		 *     $slots[] = array(
+		 *         'slug'     => 'brand-highlight',
+		 *         'name'     => __( 'Brand Highlight', 'my-theme' ),
+		 *         'property' => '--flavor--brand-highlight',
+		 *         'fallback' => '#ff6600',
+		 *         'taxonomy' => '',
+		 *         'meta_key' => '',
+		 *     );
+		 *     return $slots;
+		 * } );
+		 * ```
+		 */
+		return (array) apply_filters( 'gptc_term_color_slots', $slots );
 		}
 
 		/**
@@ -1884,10 +2033,62 @@ if ( ! class_exists( __NAMESPACE__ . '\\Plugin' ) ) {
 		 */
 		public function get_color_taxonomies(): array {
 			/**
-			 * Filters the taxonomies that support term color meta.
+			 * Filters the taxonomies that participate in the term color system.
+			 *
+			 * This is the **single source of truth** for which taxonomies receive
+			 * color meta registration (Layer 1), design token slots (Layer 2),
+			 * frontend CSS custom property injection (Layer 3), editor palette
+			 * resolution (Layer 4), scoped per-post injection (Layer 5), and
+			 * shadow taxonomy detection (Layer 6).
+			 *
+			 * Each entry should be a registered taxonomy slug. Adding a slug
+			 * automatically triggers:
+			 *
+			 * - `register_term_meta()` for every color role defined by
+			 *   `gptc_term_color_roles`.
+			 * - Palette entries in `theme.json` (one per role per taxonomy).
+			 * - `--flavor--{taxonomy}-{role}` CSS custom properties on the
+			 *   frontend and in the editor.
+			 * - Color picker fields on the term edit screen.
+			 * - A "Colors" swatch column in the term list table.
+			 *
+			 * **Shadow taxonomy convention:** Slugs prefixed with `_` (underscore)
+			 * are treated as shadow taxonomy candidates. The plugin strips the
+			 * leading underscore, checks whether a matching post type exists with
+			 * `gatherpress-shadow-source` support, and — if confirmed — moves the
+			 * admin UI to the post editor and uses GatherPress helpers for term
+			 * resolution. See Layer 6 documentation for details.
 			 *
 			 * @since 0.1.0
-			 * @param array<int, string> $taxonomies Default: category, post_tag.
+			 *
+			 * @param array<int, string> $taxonomies Array of taxonomy slugs.
+			 *                                       Default: `array( '_gatherpress_play', 'post_tag', 'category' )`.
+			 *
+			 * @example
+			 * ```php
+			 * // Add a custom "genre" taxonomy to the color system.
+			 * add_filter( 'gptc_term_color_taxonomies', function ( array $taxonomies ): array {
+			 *     $taxonomies[] = 'genre';
+			 *     return $taxonomies;
+			 * } );
+			 * ```
+			 *
+			 * @example
+			 * ```php
+			 * // Enable only categories (remove tags and shadow taxonomies).
+			 * add_filter( 'gptc_term_color_taxonomies', function (): array {
+			 *     return array( 'category' );
+			 * } );
+			 * ```
+			 *
+			 * @example
+			 * ```php
+			 * // Add the GatherPress shadow taxonomy for the "venue" post type.
+			 * add_filter( 'gptc_term_color_taxonomies', function ( array $taxonomies ): array {
+			 *     $taxonomies[] = '_gatherpress_venue';
+			 *     return $taxonomies;
+			 * } );
+			 * ```
 			 */
 			return (array) apply_filters(
 				'gptc_term_color_taxonomies',
