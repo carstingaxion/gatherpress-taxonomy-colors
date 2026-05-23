@@ -226,15 +226,15 @@ if ( ! class_exists( __NAMESPACE__ . '\\Helpers' ) ) {
 			}
 
 			$existing_data    = $theme_json->get_data();
-			$existing_palette = $existing_data['settings']['color']['palette'] ?? array();
-
+			// @todo Depending if custom palettes are enabled.
+			$palette = ( 1 === 2 ) ? 'custom' : 'theme';
+			$existing_palette = $existing_data['settings']['color']['palette'][$palette] ?? array();
 			$indexed = array();
 			foreach ( $existing_palette as $entry ) {
 				if ( isset( $entry['slug'] ) ) {
 					$indexed[ $entry['slug'] ] = $entry;
 				}
 			}
-
 			foreach ( $new_items as $item ) {
 				$indexed[ $item['slug'] ] = $item;
 			}
@@ -244,7 +244,9 @@ if ( ! class_exists( __NAMESPACE__ . '\\Helpers' ) ) {
 					'version'  => 3,
 					'settings' => array(
 						'color' => array(
-							'palette' => array_values( $indexed ),
+							'palette' => array(
+								$palette => array_values( $indexed ),
+							),
 						),
 					),
 				)
