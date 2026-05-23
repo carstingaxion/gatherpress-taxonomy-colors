@@ -18,6 +18,11 @@ Assign colors to taxonomy terms and use them as native design tokens in the bloc
 
 GatherPress Taxonomy Colors turns term colors into first-class WordPress design tokens. Assign a primary and secondary color to any taxonomy term, and those colors appear in the block editor's color picker alongside your theme palette — resolved dynamically based on post context.
 
+| ![Screenshot 1](.wordpress-org/screenshot-1.png) | ![Screenshot 2](.wordpress-org/screenshot-2.png)  |
+|---|---|
+| ![Screenshot 3](.wordpress-org/screenshot-3.png)  | ![Screenshot 4](.wordpress-org/screenshot-4.png)  |
+
+
 ### How It Works
 
 The plugin implements a 6-layer architecture that integrates with WordPress's existing design token system:
