@@ -1,0 +1,51 @@
+{
+	"$schema": "https://schemas.wp.org/trunk/block.json",
+	"apiVersion": 3,
+	"name": "gatherpress/taxonomy-colors",
+	"version": "0.1.2",
+	"title": "Taxonomy Color Roadmap",
+	"category": "widgets",
+	"icon": "analytics",
+	"description": "A comprehensive 6-layer architectural roadmap for implementing taxonomy color-coding in WordPress, so term colors behave like native theme palette entries — including scoped per-post resolution for Query Loop contexts and shadow taxonomy support for post types.",
+	"example": {
+		"attributes": {
+			"showCodeExamples": true,
+			"defaultExpanded": false
+		}
+	},
+	"attributes": {
+		"showCodeExamples": {
+			"type": "boolean",
+			"default": true
+		},
+		"defaultExpanded": {
+			"type": "boolean",
+			"default": false
+		},
+		"accentColor": {
+			"type": "string",
+			"default": "#0073aa"
+		}
+	},
+	"supports": {
+		"html": false,
+		"align": [ "wide", "full" ],
+		"spacing": {
+			"margin": true,
+			"padding": true
+		},
+		"color": {
+			"background": true,
+			"text": false
+		},
+		"typography": {
+			"fontSize": true
+		}
+	},
+	"textdomain": "gatherpress-taxonomy-colors",
+	"editorScript": "file:./index.js",
+	"editorStyle": "file:./index.css",
+	"style": "file:./style-index.css",
+	"viewScript": "file:./view.js",
+	"render": "file:./render.php"
+}

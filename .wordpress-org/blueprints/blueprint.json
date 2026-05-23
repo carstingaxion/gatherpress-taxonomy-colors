@@ -1,0 +1,37 @@
+{
+	"$schema": "https://playground.wordpress.net/blueprint-schema.json",
+	"landingPage": "/wp-admin/post.php?post=TUTORIAL_POST_ID&action=edit",
+	"preferredVersions": {
+		"php": "8.3",
+		"wp": "latest"
+	},
+	"login": true,
+	"steps": [
+    {
+      "step": "installPlugin",
+      "pluginData": {
+        "resource": "git:directory",
+        "url": "https://github.com/carstingaxion/gatherpress-taxonomy-colors",
+        "ref": "HEAD"
+      },
+      "options": {
+        "activate": true
+      },
+      "progress": {
+        "caption": "Installing plugin from GitHub: carstingaxion/gatherpress-taxonomy-colors"
+      }
+    },
+		{
+			"step": "writeFile",
+			"path": "/tmp/demo-data.php",
+			"data": {
+				"resource": "url",
+				"url": "https://raw.githubusercontent.com/carstingaxion/gatherpress-taxonomy-colors/main/.wordpress-org/blueprints/demo-data.php"
+			}
+		},
+		{
+			"step": "runPHP",
+			"code": "<?php require '/tmp/demo-data.php';"
+		}
+	]
+}

@@ -1,0 +1,120 @@
+
+/**
+ * Taxonomy Color Roadmap — Editor-Only Styles
+ *
+ * HOW: Imported by `src/edit.js`, which causes wp-scripts to emit
+ * `build/index.css`. WordPress enqueues it only in the editor because
+ * `block.json` declares `"editorStyle": "file:./index.css"`.
+ *
+ * WHY separate: The editor placeholder has a completely different DOM
+ * structure from the frontend roadmap. Keeping these styles isolated
+ * prevents unused CSS from shipping to the frontend.
+ *
+ * @since 0.1.0
+ */
+
+/**
+ * .taxonomy-color-roadmap__editor — Root of the editor placeholder.
+ *
+ * HOW: Applied via the `className` prop in useBlockProps() in edit.js.
+ * Contains the placeholder card and the meta badge row.
+ */
+.taxonomy-color-roadmap__editor {
+	/**
+	 * __editor-placeholder — The main card area containing the icon and text.
+	 *
+	 * WHY: Mimics the native WordPress block placeholder style (e.g.,
+	 * the "Latest Posts" or "Archives" block placeholder in the editor).
+	 * A dashed border signals "this is a placeholder, not final content."
+	 */
+	&-placeholder {
+		display: flex;
+		align-items: center;
+		gap: 1rem;
+		padding: 1.5rem;
+		border: 2px dashed #ddd;
+		border-radius: 8px;
+		background: #fafafa;
+	}
+
+	/**
+	 * __editor-icon — The decorative SVG icon.
+	 *
+	 * WHY: Provides quick visual identification of the block type
+	 * when scanning a page with many blocks.
+	 */
+	&-icon {
+		flex-shrink: 0;
+		width: 48px;
+		height: 48px;
+		opacity: 0.8;
+	}
+
+	/**
+	 * __editor-text — Container for the title and description.
+	 */
+	&-text {
+		display: flex;
+		flex-direction: column;
+		gap: 0.25rem;
+	}
+
+	/**
+	 * __editor-title — The bold block name.
+	 */
+	&-title {
+		font-size: 1rem;
+		font-weight: 600;
+		color: #1e1e1e;
+	}
+
+	/**
+	 * __editor-description — The brief helper text.
+	 */
+	&-description {
+		font-size: 0.8125rem;
+		color: #757575;
+		line-height: 1.5;
+	}
+
+	/**
+	 * __editor-meta — Row of status badges below the placeholder.
+	 *
+	 * WHY: Gives the editor at-a-glance confirmation of the current
+	 * configuration (phase count, code visibility, expand state)
+	 * without needing to open the inspector sidebar.
+	 */
+	&-meta {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 0.5rem;
+		margin-top: 0.75rem;
+	}
+
+	/**
+	 * __editor-badge — Individual status badge.
+	 *
+	 * Default style: accent-colored (used for the "6 Phases" badge).
+	 */
+	&-badge {
+		display: inline-flex;
+		align-items: center;
+		padding: 0.25rem 0.625rem;
+		font-size: 0.6875rem;
+		font-weight: 600;
+		color: #ffffff;
+		border-radius: 4px;
+		line-height: 1.4;
+
+		/**
+		 * Modifier: --secondary — Muted grey badge for boolean state indicators.
+		 *
+		 * WHY: Visually differentiates informational badges (grey) from
+		 * the primary phase-count badge (accent-colored).
+		 */
+		&--secondary {
+			background: #e0e0e0 !important;
+			color: #555;
+		}
+	}
+}
