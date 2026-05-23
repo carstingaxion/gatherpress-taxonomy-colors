@@ -14,7 +14,9 @@ require_once '/wordpress/wp-load.php';
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
-
+add_filter( 'gptc_term_color_taxonomies', function ( $taxonomies ) {
+    return array( 'category', 'post_tag' );
+} );
 /* ------------------------------------------------------------------
  * 1. Seed categories with colors
  * ------------------------------------------------------------------ */
@@ -380,7 +382,7 @@ if ( ! $tutorial_existing ) {
 
 /* ------------------------------------------------------------------
  * 6. Update the blueprint landing page URL dynamically
- * ------------------------------------------------------------------ */
+ * ------------------------------------------------------------------
 
 $tutorial_post = get_page_by_path( $tutorial_slug, OBJECT, 'post' );
 
@@ -396,4 +398,4 @@ $tutorial = get_page_by_path( 'getting-started-with-taxonomy-colors', OBJECT, 'p
 if ( $tutorial ) {
 	$url = '/wp-admin/post.php?post=' . $tutorial->ID . '&action=edit';
 	file_put_contents( '/wordpress/blueprint-landing.txt', $url );
-}
+}*/
