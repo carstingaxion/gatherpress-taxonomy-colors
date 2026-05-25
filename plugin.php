@@ -19,14 +19,16 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-/* ====================================================================
+/*
+====================================================================
  * Trait: Singleton
  *
  * Eliminates repeated $instance / get_instance / __clone / __wakeup
  * boilerplate across every class in the plugin.
  *
  * @since 0.1.1
- * ==================================================================== */
+ * ====================================================================
+ */
 
 if ( ! trait_exists( __NAMESPACE__ . '\\Singleton' ) ) {
 
@@ -38,6 +40,8 @@ if ( ! trait_exists( __NAMESPACE__ . '\\Singleton' ) ) {
 	trait Singleton {
 
 		/**
+		 * The singleton instance.
+		 *
 		 * @since 0.1.1
 		 * @var static|null
 		 */
@@ -49,22 +53,29 @@ if ( ! trait_exists( __NAMESPACE__ . '\\Singleton' ) ) {
 		 * @since  0.1.1
 		 * @return static
 		 */
-		public static function get_instance(): static {
+		final public static function get_instance(): static {
 			if ( null === static::$instance ) {
 				static::$instance = new static();
 			}
 			return static::$instance;
 		}
 
-		/** @since 0.1.1 */
+		/**
+		 * Protected constructor to prevent direct instantiation.
+		 *
+		 * @since 0.1.1
+		 */
 		private function __clone() {}
 
 		/**
+		 * Prevents unserialization of the singleton instance.
+		 *
 		 * @since  0.1.1
+		 *
 		 * @throws \RuntimeException Always.
 		 * @return void
 		 */
-		public function __wakeup(): void {
+		final public function __wakeup(): void {
 			throw new \RuntimeException(
 				esc_html__( 'Cannot unserialize a Singleton.', 'gatherpress-taxonomy-colors' )
 			);
@@ -72,7 +83,8 @@ if ( ! trait_exists( __NAMESPACE__ . '\\Singleton' ) ) {
 	}
 }
 
-/* ====================================================================
+/*
+====================================================================
  * Class: Helpers
  *
  * Shared utility methods used across multiple layers: taxonomy slug
@@ -80,7 +92,8 @@ if ( ! trait_exists( __NAMESPACE__ . '\\Singleton' ) ) {
  * retrieval, and per-taxonomy term color resolution.
  *
  * @since 0.1.1
- * ==================================================================== */
+ * ====================================================================
+ */
 
 if ( ! class_exists( __NAMESPACE__ . '\\Helpers' ) ) {
 
@@ -89,7 +102,7 @@ if ( ! class_exists( __NAMESPACE__ . '\\Helpers' ) ) {
 	 *
 	 * @since 0.1.1
 	 */
-	final class Helpers {
+	class Helpers {
 
 		/**
 		 * Cached color roles array.
@@ -120,12 +133,12 @@ if ( ! class_exists( __NAMESPACE__ . '\\Helpers' ) ) {
 				array(
 					'slug'     => 'primary',
 					'label'    => __( 'Primary', 'gatherpress-taxonomy-colors' ),
-					'meta_key' => 'term_color',
+					'meta_key' => 'term_color', // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_key
 				),
 				array(
 					'slug'     => 'secondary',
 					'label'    => __( 'Secondary', 'gatherpress-taxonomy-colors' ),
-					'meta_key' => 'term_color_secondary',
+					'meta_key' => 'term_color_secondary', // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_key
 				),
 			);
 
@@ -219,7 +232,7 @@ if ( ! class_exists( __NAMESPACE__ . '\\Helpers' ) ) {
 					$validated[] = array(
 						'slug'     => sanitize_key( $role['slug'] ),
 						'label'    => sanitize_text_field( $role['label'] ),
-						'meta_key' => sanitize_key( $role['meta_key'] ),
+						'meta_key' => sanitize_key( $role['meta_key'] ), // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_key
 					);
 				}
 			}
@@ -257,7 +270,7 @@ if ( ! class_exists( __NAMESPACE__ . '\\Helpers' ) ) {
 		 * Builds a CSS rule block string from a selector and property map.
 		 *
 		 * @since  0.1.1
-		 * @param  string               $selector CSS selector (e.g. ':root', 'body').
+		 * @param  string                $selector CSS selector (e.g. ':root', 'body').
 		 * @param  array<string, string> $properties Map of property name to value.
 		 * @return string Complete CSS rule block.
 		 */
@@ -284,7 +297,7 @@ if ( ! class_exists( __NAMESPACE__ . '\\Helpers' ) ) {
 		 * entries sharing the same slug, and returns the updated object.
 		 *
 		 * @since  0.1.1
-		 * @param  \WP_Theme_JSON_Data                       $theme_json  Theme JSON data.
+		 * @param  \WP_Theme_JSON_Data                                          $theme_json  Theme JSON data.
 		 * @param  array<int, array{slug: string, color: string, name: string}> $new_items   Palette entries to merge.
 		 * @return \WP_Theme_JSON_Data Modified theme JSON data.
 		 */
@@ -293,11 +306,11 @@ if ( ! class_exists( __NAMESPACE__ . '\\Helpers' ) ) {
 				return $theme_json;
 			}
 
-			$existing_data    = $theme_json->get_data();
+			$existing_data = $theme_json->get_data();
 			// @todo Depending if custom palettes are enabled.
-			$palette = ( 1 === 2 ) ? 'custom' : 'theme';
-			$existing_palette = $existing_data['settings']['color']['palette'][$palette] ?? array();
-			$indexed = array();
+			$palette          = ( 1 === 2 ) ? 'custom' : 'theme';
+			$existing_palette = $existing_data['settings']['color']['palette'][ $palette ] ?? array();
+			$indexed          = array();
 			foreach ( $existing_palette as $entry ) {
 				if ( isset( $entry['slug'] ) ) {
 					$indexed[ $entry['slug'] ] = $entry;
@@ -479,13 +492,15 @@ if ( ! class_exists( __NAMESPACE__ . '\\Helpers' ) ) {
 	}
 }
 
-/* ====================================================================
+/*
+====================================================================
  * Class: Term_Color_Meta
  *
  * Responsibility: Layer 1 — Term Meta for Color Storage.
  *
  * @since 0.1.0
- * ==================================================================== */
+ * ====================================================================
+ */
 
 if ( ! class_exists( __NAMESPACE__ . '\\Term_Color_Meta' ) ) {
 
@@ -494,7 +509,7 @@ if ( ! class_exists( __NAMESPACE__ . '\\Term_Color_Meta' ) ) {
 	 *
 	 * @since 0.1.0
 	 */
-	final class Term_Color_Meta {
+	class Term_Color_Meta {
 
 		use Singleton;
 
@@ -550,29 +565,32 @@ if ( ! class_exists( __NAMESPACE__ . '\\Term_Color_Meta' ) ) {
 		 * @return void
 		 */
 		public function register_colors_updated_meta(): void {
-			register_post_meta( '', '_gptc_colors_updated', array(
-				'type'              => 'string',
-				'single'            => true,
-				'show_in_rest'      => true,
-				'sanitize_callback' => 'sanitize_text_field',
-				'default'           => '',
-				'auth_callback'     => function () {
-					return current_user_can( 'edit_posts' );
-				},
-			) );
+			register_post_meta(
+				'',
+				'_gptc_colors_updated',
+				array(
+					'type'              => 'string',
+					'single'            => true,
+					'show_in_rest'      => true,
+					'sanitize_callback' => 'sanitize_text_field',
+					'default'           => '',
+					'auth_callback'     => function () {
+						return current_user_can( 'edit_posts' );
+					},
+				)
+			);
 		}
 
 		/**
 		 * Renders the color picker fields on the "Add New Term" form.
 		 *
 		 * @since  0.1.0
-		 * @param  string $taxonomy The taxonomy slug.
 		 * @return void
 		 */
-		public function render_add_term_color_field( string $taxonomy ): void {
+		public function render_add_term_color_field(): void {
 			wp_nonce_field( 'gptc_save_term_color', 'gptc_term_color_nonce' );
-			$roles   = Helpers::get_color_roles();
-			$values  = array_fill_keys( array_column( $roles, 'meta_key' ), '' );
+			$roles  = Helpers::get_color_roles();
+			$values = array_fill_keys( array_column( $roles, 'meta_key' ), '' );
 			$this->render_color_fields( 'div', $values );
 		}
 
@@ -600,7 +618,7 @@ if ( ! class_exists( __NAMESPACE__ . '\\Term_Color_Meta' ) ) {
 		 * or the "Edit" form (table row).
 		 *
 		 * @since  0.2.0
-		 * @param  string               $wrapper 'div' for add-form, 'tr' for edit-form.
+		 * @param  string                $wrapper 'div' for add-form, 'tr' for edit-form.
 		 * @param  array<string, string> $values  Map of meta_key => current value.
 		 * @return void
 		 */
@@ -849,14 +867,16 @@ if ( ! class_exists( __NAMESPACE__ . '\\Term_Color_Meta' ) ) {
 	}
 }
 
-/* ====================================================================
+/*
+====================================================================
  * Class: Term_Color_Tokens
  *
  * Responsibility: Layer 2 — Design Token Slot Definitions and
  * theme.json Palette Integration.
  *
  * @since 0.1.0
- * ==================================================================== */
+ * ====================================================================
+ */
 
 if ( ! class_exists( __NAMESPACE__ . '\\Term_Color_Tokens' ) ) {
 
@@ -865,7 +885,7 @@ if ( ! class_exists( __NAMESPACE__ . '\\Term_Color_Tokens' ) ) {
 	 *
 	 * @since 0.1.0
 	 */
-	final class Term_Color_Tokens {
+	class Term_Color_Tokens {
 
 		use Singleton;
 
@@ -932,7 +952,7 @@ if ( ! class_exists( __NAMESPACE__ . '\\Term_Color_Tokens' ) ) {
 						'property' => '--flavor--' . $normalized_tax . '-' . $role['slug'],
 						'fallback' => $fallback,
 						'taxonomy' => $taxonomy,
-						'meta_key' => $role['meta_key'],
+						'meta_key' => $role['meta_key'], // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_key
 					);
 				}
 			}
@@ -1026,7 +1046,7 @@ if ( ! class_exists( __NAMESPACE__ . '\\Term_Color_Tokens' ) ) {
 		 * } );
 		 * ```
 		 */
-		return (array) apply_filters( 'gptc_term_color_slots', $slots );
+			return (array) apply_filters( 'gptc_term_color_slots', $slots );
 		}
 
 		/**
@@ -1060,8 +1080,8 @@ if ( ! class_exists( __NAMESPACE__ . '\\Term_Color_Tokens' ) ) {
 			$properties = array();
 
 			foreach ( $this->get_term_color_slots() as $slot ) {
-				$prop_name  = '--wp--preset--color--' . esc_attr( $slot['slug'] );
-				$prop_value = sprintf(
+				$prop_name                = '--wp--preset--color--' . esc_attr( $slot['slug'] );
+				$prop_value               = sprintf(
 					'var(%s, %s)',
 					$slot['property'],
 					esc_attr( sanitize_hex_color( $slot['fallback'] ) ?? '#888888' )
@@ -1165,13 +1185,15 @@ if ( ! class_exists( __NAMESPACE__ . '\\Term_Color_Tokens' ) ) {
 	}
 }
 
-/* ====================================================================
+/*
+====================================================================
  * Class: Term_Color_Resolver
  *
  * Responsibility: Layers 3 & 4 — Contextual Color Resolution.
  *
  * @since 0.1.0
- * ==================================================================== */
+ * ====================================================================
+ */
 
 if ( ! class_exists( __NAMESPACE__ . '\\Term_Color_Resolver' ) ) {
 
@@ -1180,7 +1202,7 @@ if ( ! class_exists( __NAMESPACE__ . '\\Term_Color_Resolver' ) ) {
 	 *
 	 * @since 0.1.0
 	 */
-	final class Term_Color_Resolver {
+	class Term_Color_Resolver {
 
 		use Singleton;
 
@@ -1319,7 +1341,7 @@ if ( ! class_exists( __NAMESPACE__ . '\\Term_Color_Resolver' ) ) {
 			$slots  = Term_Color_Tokens::get_instance()->get_term_color_slots();
 
 			$new_items = array_map(
-				function ( array $slot ) use ( $colors ): array {
+				function ( array $slot ) use ( $colors ): array { // phpcs:ignore Universal.FunctionDeclarations.NoLongClosures.ExceedsRecommended
 					$slug = sanitize_key( $slot['slug'] );
 					return array(
 						'slug'  => $slug,
@@ -1358,13 +1380,15 @@ if ( ! class_exists( __NAMESPACE__ . '\\Term_Color_Resolver' ) ) {
 	}
 }
 
-/* ====================================================================
+/*
+====================================================================
  * Class: Term_Color_Scoper
  *
  * Responsibility: Layer 5 — Query Loop Scoped Resolution.
  *
  * @since 0.1.0
- * ==================================================================== */
+ * ====================================================================
+ */
 
 if ( ! class_exists( __NAMESPACE__ . '\\Term_Color_Scoper' ) ) {
 
@@ -1373,7 +1397,7 @@ if ( ! class_exists( __NAMESPACE__ . '\\Term_Color_Scoper' ) ) {
 	 *
 	 * @since 0.1.0
 	 */
-	final class Term_Color_Scoper {
+	class Term_Color_Scoper {
 
 		use Singleton;
 
@@ -1383,7 +1407,7 @@ if ( ! class_exists( __NAMESPACE__ . '\\Term_Color_Scoper' ) ) {
 		 * @since 0.1.0
 		 */
 		private function __construct() {
-			add_filter( 'render_block_core/post-template', array( $this, 'scope_term_colors_to_post_template' ), 10, 3 );
+			add_filter( 'render_block_core/post-template', array( $this, 'scope_term_colors_to_post_template' ) );
 			add_action( 'init', array( $this, 'register_post_terms_block_style' ) );
 			add_filter( 'render_block_core/post-terms', array( $this, 'inject_post_terms_color_properties' ), 10, 3 );
 		}
@@ -1392,7 +1416,7 @@ if ( ! class_exists( __NAMESPACE__ . '\\Term_Color_Scoper' ) ) {
 		 * Builds scoped inline style declarations for a set of resolved colors.
 		 *
 		 * @since  0.1.0
-		 * @param  array<string, string>                                           $colors      Resolved slot slug to hex map.
+		 * @param  array<string, string>                                                  $colors      Resolved slot slug to hex map.
 		 * @param  array<string, array{slug: string, property: string, fallback: string}> $slot_lookup Slot definitions keyed by slug.
 		 * @return string Inline style declarations string.
 		 */
@@ -1457,12 +1481,10 @@ if ( ! class_exists( __NAMESPACE__ . '\\Term_Color_Scoper' ) ) {
 		 * Injects scoped term color properties per post inside post-template.
 		 *
 		 * @since  0.1.0
-		 * @param  string    $block_content Rendered post-template HTML.
-		 * @param  array     $block         Parsed block array.
-		 * @param  \WP_Block $instance      Block instance.
+		 * @param  string $block_content Rendered post-template HTML.
 		 * @return string Modified block content.
 		 */
-		public function scope_term_colors_to_post_template( string $block_content, array $block, \WP_Block $instance ): string {
+		public function scope_term_colors_to_post_template( string $block_content ): string {
 			$trimmed = trim( $block_content );
 			if ( '' === $trimmed ) {
 				return $block_content;
@@ -1472,7 +1494,12 @@ if ( ! class_exists( __NAMESPACE__ . '\\Term_Color_Scoper' ) ) {
 			$slot_lookup = $this->get_slot_lookup();
 			$processor   = new \WP_HTML_Tag_Processor( $block_content );
 
-			while ( $processor->next_tag( array( 'tag_name' => 'LI', 'class_name' => 'wp-block-post' ) ) ) {
+			while ( $processor->next_tag(
+				array(
+					'tag_name'   => 'LI',
+					'class_name' => 'wp-block-post',
+				)
+			) ) {
 				$class_attr = $processor->get_attribute( 'class' );
 
 				if ( ! $class_attr ) {
@@ -1631,7 +1658,8 @@ if ( ! class_exists( __NAMESPACE__ . '\\Term_Color_Scoper' ) ) {
 	}
 }
 
-/* ====================================================================
+/*
+====================================================================
  * Class: Shadow_Taxonomy_Support
  *
  * Responsibility: Layer 6 — Shadow Taxonomy Support for Post Types.
@@ -1641,7 +1669,8 @@ if ( ! class_exists( __NAMESPACE__ . '\\Term_Color_Scoper' ) ) {
  * shadow-source post editors, and admin columns to their list tables.
  *
  * @since 0.1.2
- * ==================================================================== */
+ * ====================================================================
+ */
 
 if ( ! class_exists( __NAMESPACE__ . '\\Shadow_Taxonomy_Support' ) ) {
 
@@ -1650,7 +1679,7 @@ if ( ! class_exists( __NAMESPACE__ . '\\Shadow_Taxonomy_Support' ) ) {
 	 *
 	 * @since 0.1.2
 	 */
-	final class Shadow_Taxonomy_Support {
+	class Shadow_Taxonomy_Support {
 
 		use Singleton;
 
@@ -1980,14 +2009,16 @@ if ( ! class_exists( __NAMESPACE__ . '\\Shadow_Taxonomy_Support' ) ) {
 	}
 }
 
-/* ====================================================================
+/*
+====================================================================
  * Class: Plugin
  *
  * Responsibility: Slim orchestrator — registers the Gutenberg block
  * and bootstraps all sub-singletons.
  *
  * @since 0.1.0
- * ==================================================================== */
+ * ====================================================================
+ */
 
 if ( ! class_exists( __NAMESPACE__ . '\\Plugin' ) ) {
 
@@ -1996,7 +2027,7 @@ if ( ! class_exists( __NAMESPACE__ . '\\Plugin' ) ) {
 	 *
 	 * @since 0.1.0
 	 */
-	final class Plugin {
+	class Plugin {
 
 		use Singleton;
 

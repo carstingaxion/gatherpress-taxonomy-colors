@@ -23,7 +23,7 @@ if ( ! class_exists( __NAMESPACE__ . '\\Renderer' ) ) {
 	 *
 	 * @since 0.1.0
 	 */
-	final class Renderer {
+	class Renderer {
 
 		/**
 		 * @since 0.1.0
@@ -169,7 +169,7 @@ if ( ! class_exists( __NAMESPACE__ . '\\Renderer' ) ) {
 					. "Frontend/Editor resolution (on a post in \"Technology\" + \"Breaking\"):\n"
 					. "  --flavor--category-primary:   #2563eb;\n"
 					. "  --flavor--category-secondary:  #93c5fd;\n"
-					. "  --flavor--post_tag-primary:    #dc2626;";
+					. '  --flavor--post_tag-primary:    #dc2626;';
 
 				$output .= '<span class="taxonomy-color-roadmap__code-label">' . esc_html__( 'Conceptual Model', 'gatherpress-taxonomy-colors' ) . '</span>';
 				$output .= '<pre class="taxonomy-color-roadmap__code"><code>' . esc_html( $model ) . '</code></pre>';
@@ -196,8 +196,8 @@ if ( ! class_exists( __NAMESPACE__ . '\\Renderer' ) ) {
 		/**
 		 * @since  0.1.0
 		 * @param  array{number: int, title: string, summary: string, content: string, code: string, code_label: string} $phase Layer data.
-		 * @param  bool  $show_code        Whether to include the code example.
-		 * @param  bool  $default_expanded  Whether the layer starts expanded.
+		 * @param  bool                                                                                                  $show_code        Whether to include the code example.
+		 * @param  bool                                                                                                  $default_expanded  Whether the layer starts expanded.
 		 * @return string
 		 */
 		private function render_phase( array $phase, bool $show_code, bool $default_expanded ): string {
