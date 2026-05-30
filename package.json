@@ -19,7 +19,7 @@
     },
     "main": "build/index.js",
     "devDependencies": {
-        "@wordpress/scripts": "^30.15.0"
+        "@wordpress/scripts": "^32.3.0"
     },
     "scripts": {
         "build": "wp-scripts build --webpack-copy-php",
