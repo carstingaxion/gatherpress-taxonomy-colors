@@ -1929,12 +1929,12 @@ if ( ! class_exists( __NAMESPACE__ . '\\Shadow_Taxonomy_Support' ) ) {
 				$new_columns[ $key ] = $label;
 
 				if ( 'title' === $key ) {
-					$new_columns['gptc_term_colors'] = __( 'Term Colors', 'gatherpress-taxonomy-colors' );
+					$new_columns['gptc_term_colors'] = __( 'Colors', 'gatherpress-taxonomy-colors' );
 				}
 			}
 
 			if ( ! isset( $new_columns['gptc_term_colors'] ) ) {
-				$new_columns['gptc_term_colors'] = __( 'Term Colors', 'gatherpress-taxonomy-colors' );
+				$new_columns['gptc_term_colors'] = __( 'Colors', 'gatherpress-taxonomy-colors' );
 			}
 
 			return $new_columns;
