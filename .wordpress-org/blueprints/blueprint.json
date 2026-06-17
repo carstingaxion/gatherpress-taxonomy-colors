@@ -14,6 +14,16 @@
         "blogdescription": "Enhancing GatherPress with Taxonomy Colors."
       }
     },
+		{
+			"step": "installPlugin",
+			"pluginData": {
+				"resource": "url",
+				"url": "https://github.com/GatherPress/gatherpress/releases/download/0.34.0-beta.1/gatherpress.0.34.0-beta.1.zip"
+			},
+      "options": {
+          "activate": true
+      }
+		},
     {
       "step": "installPlugin",
       "pluginData": {
