@@ -2125,7 +2125,14 @@ if ( ! class_exists( __NAMESPACE__ . '\\Plugin' ) ) {
 			 */
 			return (array) apply_filters(
 				'gptc_term_color_taxonomies',
-				array( '_gatherpress_play', 'post_tag', 'category' )
+				array(
+					'gatherpress_topic',
+					'_gatherpress_venue',
+					'_gatherpress_play',
+					'_gatherpress_season',
+					'post_tag',
+					'category'
+				)
 			);
 		}
 	}
