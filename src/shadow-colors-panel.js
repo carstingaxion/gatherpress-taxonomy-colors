@@ -140,8 +140,8 @@ function ColorRow( { label, value, onChange, colors } ) {
  * @return {Element|null} The sidebar panel element or null.
  */
 export default function ShadowColorsPanel() {
-	const { postType,  postSlug, postTypeLabel, themeColors } =
-		useSelect( ( select ) => {
+	const { postType, postSlug, postTypeLabel, themeColors } = useSelect(
+		( select ) => {
 			const editor = select( 'core/editor' );
 			const currentPostType = editor.getCurrentPostType();
 
@@ -162,7 +162,9 @@ export default function ShadowColorsPanel() {
 				postTypeLabel: singularLabel,
 				themeColors: palette,
 			};
-		}, [] );
+		},
+		[]
+	);
 
 	const { editPost } = useDispatch( 'core/editor' );
 
