@@ -7,7 +7,7 @@
  * the `gptc_term_color_roles` filter output.
  *
  * @since 0.1.3
- * @package GatherpressTaxonomyColors
+ * @package
  */
 
 import { __ } from '@wordpress/i18n';
@@ -19,7 +19,7 @@ import {
 	Dropdown,
 	Button,
 	Spinner,
-	__experimentalVStack as VStack,
+	__experimentalVStack as VStack, // eslint-disable-line @wordpress/no-unsafe-wp-apis
 } from '@wordpress/components';
 import { PluginDocumentSettingPanel } from '@wordpress/editor';
 import apiFetch from '@wordpress/api-fetch';
@@ -140,28 +140,31 @@ function ColorRow( { label, value, onChange, colors } ) {
  * @return {Element|null} The sidebar panel element or null.
  */
 export default function ShadowColorsPanel() {
-	const { postType, postId, postSlug, postTypeLabel, themeColors } = useSelect( ( select ) => {
-		const editor = select( 'core/editor' );
-		const currentPostType = editor.getCurrentPostType();
+	const { postType, postSlug, postTypeLabel, themeColors } = useSelect(
+		( select ) => {
+			const editor = select( 'core/editor' );
+			const currentPostType = editor.getCurrentPostType();
 
-		let singularLabel = '';
-		if ( currentPostType ) {
-			const typeObj = select( 'core' ).getPostType( currentPostType );
-			singularLabel = typeObj?.labels?.singular_name || currentPostType;
-		}
+			let singularLabel = '';
+			if ( currentPostType ) {
+				const typeObj = select( 'core' ).getPostType( currentPostType );
+				singularLabel =
+					typeObj?.labels?.singular_name || currentPostType;
+			}
 
-		// Grab the theme palette so the picker shows theme colors.
-		const settings = select( 'core/block-editor' ).getSettings();
-		const palette = settings?.colors || [];
+			// Grab the theme palette so the picker shows theme colors.
+			const settings = select( 'core/block-editor' ).getSettings();
+			const palette = settings?.colors || [];
 
-		return {
-			postType: currentPostType,
-			postId: editor.getCurrentPostId(),
-			postSlug: editor.getEditedPostAttribute( 'slug' ),
-			postTypeLabel: singularLabel,
-			themeColors: palette,
-		};
-	}, [] );
+			return {
+				postType: currentPostType,
+				postSlug: editor.getEditedPostAttribute( 'slug' ),
+				postTypeLabel: singularLabel,
+				themeColors: palette,
+			};
+		},
+		[]
+	);
 
 	const { editPost } = useDispatch( 'core/editor' );
 
@@ -188,7 +191,9 @@ export default function ShadowColorsPanel() {
 		const termSlug = '_' + postSlug;
 
 		apiFetch( {
-			path: `/wp/v2/${ encodeURIComponent( taxonomySlug ) }?slug=${ encodeURIComponent( termSlug ) }&per_page=1`,
+			path: `/wp/v2/${ encodeURIComponent(
+				taxonomySlug
+			) }?slug=${ encodeURIComponent( termSlug ) }&per_page=1`,
 		} )
 			.then( ( terms ) => {
 				if ( terms && terms.length > 0 ) {
@@ -197,7 +202,8 @@ export default function ShadowColorsPanel() {
 
 					const values = {};
 					colorRoles.forEach( ( role ) => {
-						values[ role.meta_key ] = term.meta?.[ role.meta_key ] || '';
+						values[ role.meta_key ] =
+							term.meta?.[ role.meta_key ] || '';
 					} );
 					setColorValues( values );
 					colorsRef.current = { ...values };
@@ -242,7 +248,9 @@ export default function ShadowColorsPanel() {
 			} );
 
 			apiFetch( {
-				path: `/wp/v2/${ encodeURIComponent( taxonomySlug ) }/${ termId }`,
+				path: `/wp/v2/${ encodeURIComponent(
+					taxonomySlug
+				) }/${ termId }`,
 				method: 'POST',
 				data: { meta },
 			} )
@@ -320,7 +328,9 @@ export default function ShadowColorsPanel() {
 							key={ role.slug }
 							label={ role.label }
 							value={ colorValues[ role.meta_key ] || '' }
-							onChange={ ( val ) => handleColorChange( role.meta_key, val ) }
+							onChange={ ( val ) =>
+								handleColorChange( role.meta_key, val )
+							}
 							colors={ themeColors }
 						/>
 					) ) }

@@ -6,23 +6,19 @@
 
 import { __ } from '@wordpress/i18n';
 import { useBlockProps, InspectorControls } from '@wordpress/block-editor';
-import {
-	PanelBody,
-	ToggleControl,
-	ColorPicker,
-} from '@wordpress/components';
+import { PanelBody, ToggleControl, ColorPicker } from '@wordpress/components';
 
 import './editor.scss';
 
 /**
  * The Edit function.
  *
- * @param {Object}   props                           Block props.
- * @param {Object}   props.attributes                Current attribute values.
+ * @param {Object}   props                             Block props.
+ * @param {Object}   props.attributes                  Current attribute values.
  * @param {boolean}  props.attributes.showCodeExamples Whether to display code snippets.
  * @param {boolean}  props.attributes.defaultExpanded  Whether phases start expanded.
  * @param {string}   props.attributes.accentColor      Hex color for accent elements.
- * @param {Function} props.setAttributes              Setter to update block attributes.
+ * @param {Function} props.setAttributes               Setter to update block attributes.
  *
  * @return {Element} The editor element tree.
  */
@@ -37,16 +33,28 @@ export default function Edit( { attributes, setAttributes } ) {
 		<>
 			<InspectorControls>
 				<PanelBody
-					title={ __( 'Roadmap Display', 'gatherpress-taxonomy-colors' ) }
+					title={ __(
+						'Roadmap Display',
+						'gatherpress-taxonomy-colors'
+					) }
 					initialOpen={ true }
 				>
 					<ToggleControl
 						__nextHasNoMarginBottom
-						label={ __( 'Show Code Examples', 'gatherpress-taxonomy-colors' ) }
+						label={ __(
+							'Show Code Examples',
+							'gatherpress-taxonomy-colors'
+						) }
 						help={
 							showCodeExamples
-								? __( 'Code snippets are visible in the roadmap.', 'gatherpress-taxonomy-colors' )
-								: __( 'Code snippets are hidden for a cleaner read.', 'gatherpress-taxonomy-colors' )
+								? __(
+										'Code snippets are visible in the roadmap.',
+										'gatherpress-taxonomy-colors'
+								  )
+								: __(
+										'Code snippets are hidden for a cleaner read.',
+										'gatherpress-taxonomy-colors'
+								  )
 						}
 						checked={ showCodeExamples }
 						onChange={ ( value ) =>
@@ -55,11 +63,20 @@ export default function Edit( { attributes, setAttributes } ) {
 					/>
 					<ToggleControl
 						__nextHasNoMarginBottom
-						label={ __( 'Expand All Phases', 'gatherpress-taxonomy-colors' ) }
+						label={ __(
+							'Expand All Phases',
+							'gatherpress-taxonomy-colors'
+						) }
 						help={
 							defaultExpanded
-								? __( 'All phases start expanded on the frontend.', 'gatherpress-taxonomy-colors' )
-								: __( 'Phases start collapsed; visitors click to expand.', 'gatherpress-taxonomy-colors' )
+								? __(
+										'All phases start expanded on the frontend.',
+										'gatherpress-taxonomy-colors'
+								  )
+								: __(
+										'Phases start collapsed; visitors click to expand.',
+										'gatherpress-taxonomy-colors'
+								  )
 						}
 						checked={ defaultExpanded }
 						onChange={ ( value ) =>
@@ -68,7 +85,10 @@ export default function Edit( { attributes, setAttributes } ) {
 					/>
 				</PanelBody>
 				<PanelBody
-					title={ __( 'Accent Color', 'gatherpress-taxonomy-colors' ) }
+					title={ __(
+						'Accent Color',
+						'gatherpress-taxonomy-colors'
+					) }
 					initialOpen={ false }
 				>
 					<ColorPicker
@@ -99,14 +119,17 @@ export default function Edit( { attributes, setAttributes } ) {
 					</svg>
 					<div className="taxonomy-color-roadmap__editor-text">
 						<strong className="taxonomy-color-roadmap__editor-title">
-						{ __( 'Taxonomy Color Roadmap', 'gatherpress-taxonomy-colors' ) }
-					</strong>
-					<span className="taxonomy-color-roadmap__editor-description">
-						{ __(
-							'A 6-layer architectural guide for per-taxonomy color-coding in WordPress using design tokens via theme.json + dynamic CSS custom properties — including shadow taxonomy support for post types. Preview the page to see the full roadmap.',
-							'gatherpress-taxonomy-colors'
-						) }
-					</span>
+							{ __(
+								'Taxonomy Color Roadmap',
+								'gatherpress-taxonomy-colors'
+							) }
+						</strong>
+						<span className="taxonomy-color-roadmap__editor-description">
+							{ __(
+								'A 6-layer architectural guide for per-taxonomy color-coding in WordPress using design tokens via theme.json + dynamic CSS custom properties — including shadow taxonomy support for post types. Preview the page to see the full roadmap.',
+								'gatherpress-taxonomy-colors'
+							) }
+						</span>
 					</div>
 				</div>
 				<div className="taxonomy-color-roadmap__editor-meta">
@@ -118,13 +141,25 @@ export default function Edit( { attributes, setAttributes } ) {
 					</span>
 					<span className="taxonomy-color-roadmap__editor-badge taxonomy-color-roadmap__editor-badge--secondary">
 						{ showCodeExamples
-							? __( 'Code examples: ON', 'gatherpress-taxonomy-colors' )
-							: __( 'Code examples: OFF', 'gatherpress-taxonomy-colors' ) }
+							? __(
+									'Code examples: ON',
+									'gatherpress-taxonomy-colors'
+							  )
+							: __(
+									'Code examples: OFF',
+									'gatherpress-taxonomy-colors'
+							  ) }
 					</span>
 					<span className="taxonomy-color-roadmap__editor-badge taxonomy-color-roadmap__editor-badge--secondary">
 						{ defaultExpanded
-							? __( 'Expanded by default', 'gatherpress-taxonomy-colors' )
-							: __( 'Collapsed by default', 'gatherpress-taxonomy-colors' ) }
+							? __(
+									'Expanded by default',
+									'gatherpress-taxonomy-colors'
+							  )
+							: __(
+									'Collapsed by default',
+									'gatherpress-taxonomy-colors'
+							  ) }
 					</span>
 				</div>
 			</div>
