@@ -2,7 +2,20 @@
 
 All notable changes to this project will be documented in this file.
 
-## [Unreleased](https://github.com/carstingaxion/gatherpress-taxonomy-colors/compare/0.1.2...HEAD)
+## [Unreleased](https://github.com/carstingaxion/gatherpress-taxonomy-colors/compare/0.2.0...HEAD)
+
+## [0.2.0](https://github.com/carstingaxion/gatherpress-taxonomy-colors/compare/0.1.2...0.2.0) - 2026-07-06
+
+- A lot of little fixes ... directly pushed into main .... I know
+  
+- Update hook docs automatically ([#11](https://github.com/carstingaxion/gatherpress-taxonomy-colors/pull/11))
+  
+- Lint ([#8](https://github.com/carstingaxion/gatherpress-taxonomy-colors/pull/8))
+  
+- Feature/add extract wp hooks ([#2](https://github.com/carstingaxion/gatherpress-taxonomy-colors/pull/2))
+  
+- Bump actions/checkout from 4 to 6 ([#7](https://github.com/carstingaxion/gatherpress-taxonomy-colors/pull/7))
+  
 
 ## [0.1.2](https://github.com/carstingaxion/gatherpress-taxonomy-colors/compare/0.1.0...0.1.2) - 2026-05-23
 
