@@ -28,7 +28,16 @@
     },
     "require-dev": {
         "akirk/extract-wp-hooks": "dev-main",
-        "figuren-theater/code-quality": "*"
+        "figuren-theater/code-quality": "*",
+        "phpunit/phpunit": "9.6",
+        "wp-phpunit/wp-phpunit": "^6.9",
+        "wpackagist-plugin/gatherpress": "*",
+        "yoast/phpunit-polyfills": "^2.0"
+    },
+    "scripts": {
+        "test": "phpunit",
+        "test:unit": "phpunit --testsuite unit",
+        "test:integration": "phpunit --testsuite integration"
     },
     "repositories": [
         {
