@@ -141,7 +141,11 @@ class Helpers {
 		 * } );
 		 * ```
 		 */
-		/** @var array<int, array{slug: string, label: string, meta_key: string}> $roles */
+		/**
+		 * Type safety
+		 *
+		 * @var array<int, array{slug: string, label: string, meta_key: string}> $roles
+		 */
 		$roles = (array) apply_filters( 'gptc_term_color_roles', $defaults );
 
 		// Validate and normalize.
@@ -229,7 +233,11 @@ class Helpers {
 			return $theme_json;
 		}
 
-		/** @var array<string, mixed> $existing_data */
+		/**
+		 * Type safety
+		 *
+		 * @var array<string, mixed> $existing_data
+		 */
 		$existing_data    = $theme_json->get_data();
 		$settings         = is_array( $existing_data['settings'] ?? null ) ? $existing_data['settings'] : array();
 		$color            = is_array( $settings['color'] ?? null ) ? $settings['color'] : array();

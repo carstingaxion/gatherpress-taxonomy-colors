@@ -240,11 +240,10 @@ class Term_Color_Meta {
 		 * @return void
 		 */
 	private function save_term_color( int $term_id ): void {
-		$raw_nonce = isset( $_POST['gptc_term_color_nonce'] ) ? wp_unslash( $_POST['gptc_term_color_nonce'] ) : '';
+		$raw_nonce = isset( $_POST['gptc_term_color_nonce'] ) && is_string( $_POST['gptc_term_color_nonce'] ) ? sanitize_text_field( $_POST['gptc_term_color_nonce'] ) : '';
 		if (
-			! is_string( $raw_nonce ) ||
 			! wp_verify_nonce(
-				sanitize_text_field( $raw_nonce ),
+				wp_unslash( $raw_nonce ),
 				'gptc_save_term_color'
 			)
 		) {
@@ -258,10 +257,8 @@ class Term_Color_Meta {
 		$meta_keys = Helpers::get_color_meta_keys();
 
 		foreach ( $meta_keys as $meta_key ) {
-			$raw_value = isset( $_POST[ $meta_key ] ) ? wp_unslash( $_POST[ $meta_key ] ) : '';
-			$value     = is_string( $raw_value )
-				? sanitize_hex_color( sanitize_text_field( $raw_value ) )
-				: '';
+			$raw_value = isset( $_POST[ $meta_key ] ) && is_string( $_POST[ $meta_key ] ) ? sanitize_text_field( $_POST[ $meta_key ] ) : '';
+			$value     = sanitize_hex_color( wp_unslash( $raw_value ) );
 
 			update_term_meta( $term_id, $meta_key, $value );
 		}

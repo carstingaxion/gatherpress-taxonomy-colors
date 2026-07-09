@@ -105,7 +105,11 @@ class Shadow_Taxonomy_Support {
 
 			// Optional cross-check with GatherPress canonical helper.
 			if ( class_exists( '\GatherPress\Core\Shadow_Source' ) ) {
-				/** @var object $shadow_source */
+				/**
+				 * Type safety
+				 *
+				 * @var object $shadow_source
+				 */
 				$shadow_source = \GatherPress\Core\Shadow_Source::get_instance();
 
 				if ( method_exists( $shadow_source, 'is_shadow_term_slug' ) && ! $shadow_source->is_shadow_term_slug( $slug ) ) {
@@ -171,7 +175,11 @@ class Shadow_Taxonomy_Support {
 			return null;
 		}
 
-		/** @var object $shadow_source */
+		/**
+		 * Type safety
+		 *
+		 * @var object $shadow_source
+		 */
 		$shadow_source = \GatherPress\Core\Shadow_Source::get_instance();
 
 		if ( ! method_exists( $shadow_source, 'term_slug_from_post_name' ) ) {
@@ -253,8 +261,12 @@ class Shadow_Taxonomy_Support {
 			return;
 		}
 
-		/** @var array{dependencies: string[], version: string} $asset */
-		$asset = require $asset_file;
+		/**
+		 * Type safety
+		 *
+		 * @var array{dependencies: string[], version: string} $asset
+		 */
+		$asset = require $asset_file; // phpcs:ignore WordPressVIPMinimum.Files.IncludingFile.UsingVariable
 
 		wp_enqueue_script(
 			$handle,

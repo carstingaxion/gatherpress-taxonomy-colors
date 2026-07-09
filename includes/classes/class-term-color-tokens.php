@@ -287,7 +287,7 @@ class Term_Color_Tokens {
 		$l = $lightness / 100;
 
 		if ( 0.0 === $s ) {
-			$r = $g = $b = $l;
+			$r = $g = $b = $l; // phpcs:ignore Squiz.PHP.DisallowMultipleAssignments.Found
 		} else {
 			$q = $l < 0.5
 				? $l * ( 1 + $s )
@@ -318,10 +318,10 @@ class Term_Color_Tokens {
 		 */
 	private static function hue_to_rgb( float $p, float $q, float $t ): float {
 		if ( $t < 0 ) {
-			$t += 1;
+			++$t;
 		}
 		if ( $t > 1 ) {
-			$t -= 1;
+			--$t;
 		}
 		if ( $t < 1 / 6 ) {
 			return $p + ( $q - $p ) * 6 * $t;
