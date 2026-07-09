@@ -16,6 +16,7 @@ declare(strict_types=1);
 namespace GatherpressTaxonomyColors;
 
 use GatherPress\Core;
+use WP_Theme_JSON_Data;
 
 // Exit if accessed directly.
 defined( 'ABSPATH' ) || exit; // @codeCoverageIgnore
@@ -204,10 +205,10 @@ class Term_Color_Tokens {
 		 * Injects term color design tokens into the theme.json palette.
 		 *
 		 * @since  0.1.0
-		 * @param  \WP_Theme_JSON_Data $theme_json The theme.json data object.
-		 * @return \WP_Theme_JSON_Data Modified theme.json data.
+		 * @param  WP_Theme_JSON_Data $theme_json The theme.json data object.
+		 * @return WP_Theme_JSON_Data Modified theme.json data.
 		 */
-	public function inject_term_color_design_tokens( \WP_Theme_JSON_Data $theme_json ): \WP_Theme_JSON_Data {
+	public function inject_term_color_design_tokens( WP_Theme_JSON_Data $theme_json ): WP_Theme_JSON_Data {
 		$new_items = array_map(
 			function ( array $slot ): array {
 				return array(

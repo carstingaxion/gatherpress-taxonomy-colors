@@ -16,6 +16,9 @@ declare(strict_types=1);
 namespace GatherpressTaxonomyColors;
 
 use GatherPress\Core;
+use WP_Post;
+use WP_Term;
+use WP_Theme_JSON_Data;
 
 // Exit if accessed directly.
 defined( 'ABSPATH' ) || exit; // @codeCoverageIgnore
@@ -82,7 +85,7 @@ class Term_Color_Resolver {
 
 		global $post;
 
-		if ( $post instanceof \WP_Post && $post->ID > 0 ) {
+		if ( $post instanceof WP_Post && $post->ID > 0 ) {
 			return (int) $post->ID;
 		}
 
@@ -103,7 +106,7 @@ class Term_Color_Resolver {
 		if ( is_tax() || is_category() || is_tag() ) {
 			$term = get_queried_object();
 
-			if ( $term instanceof \WP_Term ) {
+			if ( $term instanceof WP_Term ) {
 				$normalized_tax = Helpers::normalize_taxonomy_slug( $term->taxonomy );
 				return Helpers::resolve_colors_from_terms( array( $term ), $normalized_tax );
 			}
@@ -161,10 +164,10 @@ class Term_Color_Resolver {
 		 * Replaces abstract palette entries with resolved hex values in the editor.
 		 *
 		 * @since  0.1.0
-		 * @param  \WP_Theme_JSON_Data $theme_json The theme.json data object.
-		 * @return \WP_Theme_JSON_Data Modified theme.json data.
+		 * @param  WP_Theme_JSON_Data $theme_json The theme.json data object.
+		 * @return WP_Theme_JSON_Data Modified theme.json data.
 		 */
-	public function inject_editor_term_color_tokens( \WP_Theme_JSON_Data $theme_json ): \WP_Theme_JSON_Data {
+	public function inject_editor_term_color_tokens( WP_Theme_JSON_Data $theme_json ): WP_Theme_JSON_Data {
 		$post_id = $this->get_editor_post_id();
 
 		if ( ! $post_id ) {

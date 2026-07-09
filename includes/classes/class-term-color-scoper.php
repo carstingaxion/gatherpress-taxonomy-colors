@@ -16,6 +16,8 @@ declare(strict_types=1);
 namespace GatherpressTaxonomyColors;
 
 use GatherPress\Core;
+use WP_Block;
+use WP_HTML_Tag_Processor;
 
 // Exit if accessed directly.
 defined( 'ABSPATH' ) || exit; // @codeCoverageIgnore
@@ -103,11 +105,11 @@ class Term_Color_Scoper {
 		 * Applies scoped style declarations to an HTML element via WP_HTML_Tag_Processor.
 		 *
 		 * @since  0.1.1
-		 * @param  \WP_HTML_Tag_Processor $processor          Tag processor positioned on the target element.
+		 * @param  WP_HTML_Tag_Processor $processor          Tag processor positioned on the target element.
 		 * @param  string                 $style_declarations CSS custom property declarations to inject.
 		 * @return void
 		 */
-	private function apply_scoped_styles( \WP_HTML_Tag_Processor $processor, string $style_declarations ): void {
+	private function apply_scoped_styles( WP_HTML_Tag_Processor $processor, string $style_declarations ): void {
 		$current_style = $processor->get_attribute( 'style' );
 		$new_style     = $current_style
 			? $style_declarations . $current_style
@@ -131,7 +133,7 @@ class Term_Color_Scoper {
 
 		$resolver    = Term_Color_Resolver::get_instance();
 		$slot_lookup = $this->get_slot_lookup();
-		$processor   = new \WP_HTML_Tag_Processor( $block_content );
+		$processor   = new WP_HTML_Tag_Processor( $block_content );
 
 		while ( $processor->next_tag(
 			array(
@@ -198,10 +200,10 @@ class Term_Color_Scoper {
 		 * @since  0.1.0
 		 * @param  string    $block_content Rendered block HTML.
 		 * @param  array     $block         Parsed block array.
-		 * @param  \WP_Block $instance      Block instance.
+		 * @param  WP_Block $instance      Block instance.
 		 * @return string Modified block content.
 		 */
-	public function inject_post_terms_color_properties( string $block_content, array $block, \WP_Block $instance ): string {
+	public function inject_post_terms_color_properties( string $block_content, array $block, WP_Block $instance ): string {
 		$class_name = $block['attrs']['className'] ?? '';
 
 		if ( false === strpos( $class_name, 'is-style-term-colors' ) ) {
@@ -259,7 +261,7 @@ class Term_Color_Scoper {
 			return $block_content;
 		}
 
-		$processor = new \WP_HTML_Tag_Processor( $block_content );
+		$processor = new WP_HTML_Tag_Processor( $block_content );
 
 		while ( $processor->next_tag( 'A' ) ) {
 			$href = $processor->get_attribute( 'href' );
