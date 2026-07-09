@@ -3,7 +3,7 @@
  * Plugin Name:       GatherPress Taxonomy Colors
  * Plugin URI:        https://github.com/carstingaxion/gatherpress-taxonomy-colors
  * Description:       Assign colors to taxonomy terms and use them as native design tokens in the block editor — resolved contextually per post, per archive, and per Query Loop item.
- * Version:           0.2.0
+ * Version:           0.3.0
  * Requires at least: 6.4
  * Requires PHP:      7.4
  * Requires plugins:  gatherpress
