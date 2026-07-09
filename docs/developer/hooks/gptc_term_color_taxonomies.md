@@ -65,7 +65,7 @@ add_filter( 'gptc_term_color_taxonomies', function ( array $taxonomies ): array 
 
 ## Files
 
-- [plugin.php:2126](https://github.com/carstingaxion/gatherpress-taxonomy-colors/blob/main/plugin.php#L2126)
+- [includes/classes/class-plugin.php:131](https://github.com/carstingaxion/gatherpress-taxonomy-colors/blob/main/includes/classes/class-plugin.php#L131)
 ```php
 apply_filters(
 				'gptc_term_color_taxonomies',
