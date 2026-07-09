@@ -66,7 +66,7 @@ class Shadow_Taxonomy_Support {
 		 */
 	protected function setup_hooks(): void {
 		add_action( 'init', array( $this, 'detect_shadow_taxonomies' ), 25 );
-		add_action( 'enqueue_block_editor_assets', array( $this, 'enqueue_shadow_config_script' ) );
+		add_action( 'enqueue_block_editor_assets', array( $this, 'enqueue_editor_script' ) );
 		add_action( 'admin_init', array( $this, 'register_shadow_admin_columns' ) );
 	}
 
@@ -225,17 +225,60 @@ class Shadow_Taxonomy_Support {
 	}
 
 		/**
-		 * Enqueues the shadow taxonomy config and color roles as inline scripts
-		 * so the JS sidebar panel knows which post types are shadow sources
-		 * and which color roles are available.
+		 * Registers and enqueues the block-editor JS panel, then attaches
+		 * the shadow-config and color-roles inline data it depends on.
+		 *
+		 * The script is loaded only on post-type edit screens where at least
+		 * one shadow-source post type is configured — the JS panel itself
+		 * returns null for any non-shadow-source post type, but we skip the
+		 * enqueue entirely when the map is empty to avoid an unnecessary
+		 * network request on every editor screen.
 		 *
 		 * @since  0.1.3
 		 * @return void
 		 */
-	public function enqueue_shadow_config_script(): void {
+	public function enqueue_editor_script(): void {
 		$handle = 'gatherpress-taxonomy-colors-editor-script';
 
-		// Always provide color roles to the editor.
+		// Skip entirely when no shadow-source post types were detected.
+		if ( empty( $this->get_shadow_source_post_types() ) ) {
+			return;
+		}
+
+		// Skip on every editor screen whose post type is not a shadow source.
+		$screen = get_current_screen();
+		if ( ! $screen instanceof WP_Screen || ! $this->is_shadow_source_post_type( $screen->post_type ) ) {
+			return;
+		}
+
+		$asset_file = GATHERPRESS_TAXONOMY_COLORS_CORE_PATH . 'build/index.asset.php';
+
+		if ( ! file_exists( $asset_file ) ) {
+			return;
+		}
+
+		$asset = require $asset_file;
+
+		wp_enqueue_script(
+			$handle,
+			plugins_url( 'build/index.js', GATHERPRESS_TAXONOMY_COLORS_CORE_PATH . 'plugin.php' ),
+			$asset['dependencies'],
+			$asset['version'],
+			array( 'in_footer' => true )
+		);
+
+		$this->attach_inline_data( $handle );
+	}
+
+	/**
+	 * Attaches gptcColorRoles and gptcShadowConfig as inline data
+	 * before the registered editor script handle.
+	 *
+	 * @since  0.1.3
+	 * @param  string $handle Registered script handle.
+	 * @return void
+	 */
+	private function attach_inline_data( string $handle ): void {
 		$roles_json = wp_json_encode( Helpers::get_color_roles() );
 
 		if ( false !== $roles_json ) {
