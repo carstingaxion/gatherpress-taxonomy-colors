@@ -63,7 +63,11 @@ class Helpers {
 				'meta_key' => 'term_color_secondary', // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_key
 			),
 		);
-
+		/**
+		 * Type safety
+		 *
+		 * @var array<int, array{slug: string, label: string, meta_key: string}> $roles
+		 */
 		/**
 		 * Filters the term color roles (or amount of colors).
 		 *
@@ -140,11 +144,6 @@ class Helpers {
 		 *     );
 		 * } );
 		 * ```
-		 */
-		/**
-		 * Type safety
-		 *
-		 * @var array<int, array{slug: string, label: string, meta_key: string}> $roles
 		 */
 		$roles = (array) apply_filters( 'gptc_term_color_roles', $defaults );
 
