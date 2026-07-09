@@ -251,7 +251,7 @@ class Shadow_Taxonomy_Support {
 			return;
 		}
 
-		$asset_file = GATHERPRESS_TAXONOMY_COLORS_CORE_PATH . 'build/index.asset.php';
+		$asset_file = GATHERPRESS_TAXONOMY_COLORS_CORE_PATH . '/build/index.asset.php';
 
 		if ( ! file_exists( $asset_file ) ) {
 			return;
@@ -261,7 +261,7 @@ class Shadow_Taxonomy_Support {
 
 		wp_enqueue_script(
 			$handle,
-			plugins_url( 'build/index.js', GATHERPRESS_TAXONOMY_COLORS_CORE_PATH . 'plugin.php' ),
+			plugins_url( 'build/index.js', GATHERPRESS_TAXONOMY_COLORS_CORE_PATH . '/plugin.php' ),
 			$asset['dependencies'],
 			$asset['version'],
 			array( 'in_footer' => true )
