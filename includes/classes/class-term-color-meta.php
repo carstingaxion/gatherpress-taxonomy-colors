@@ -133,7 +133,8 @@ class Term_Color_Meta {
 		$roles  = Helpers::get_color_roles();
 		$values = array();
 		foreach ( $roles as $role ) {
-			$values[ $role['meta_key'] ] = get_term_meta( $term->term_id, $role['meta_key'], true );
+			$raw                         = get_term_meta( $term->term_id, $role['meta_key'], true );
+			$values[ $role['meta_key'] ] = is_string( $raw ) ? $raw : '';
 		}
 		$this->render_color_fields( 'tr', $values );
 	}
@@ -239,10 +240,10 @@ class Term_Color_Meta {
 		 * @return void
 		 */
 	private function save_term_color( int $term_id ): void {
+		$raw_nonce = isset( $_POST['gptc_term_color_nonce'] ) && is_string( $_POST['gptc_term_color_nonce'] ) ? sanitize_text_field( $_POST['gptc_term_color_nonce'] ) : '';
 		if (
-			! isset( $_POST['gptc_term_color_nonce'] ) ||
 			! wp_verify_nonce(
-				sanitize_text_field( wp_unslash( $_POST['gptc_term_color_nonce'] ) ),
+				wp_unslash( $raw_nonce ),
 				'gptc_save_term_color'
 			)
 		) {
@@ -256,9 +257,8 @@ class Term_Color_Meta {
 		$meta_keys = Helpers::get_color_meta_keys();
 
 		foreach ( $meta_keys as $meta_key ) {
-			$value = isset( $_POST[ $meta_key ] )
-				? sanitize_hex_color( sanitize_text_field( wp_unslash( $_POST[ $meta_key ] ) ) )
-				: '';
+			$raw_value = isset( $_POST[ $meta_key ] ) && is_string( $_POST[ $meta_key ] ) ? sanitize_text_field( $_POST[ $meta_key ] ) : '';
+			$value     = sanitize_hex_color( wp_unslash( $raw_value ) );
 
 			update_term_meta( $term_id, $meta_key, $value );
 		}
@@ -327,8 +327,9 @@ class Term_Color_Meta {
 		$output = '<span style="display:inline-flex;align-items:center;gap:6px;">';
 
 		foreach ( $roles as $role ) {
-			$color   = get_term_meta( $term_id, $role['meta_key'], true );
-			$output .= $this->render_color_swatch( $color, $role['label'] );
+			$raw_color = get_term_meta( $term_id, $role['meta_key'], true );
+			$color     = is_string( $raw_color ) ? $raw_color : '';
+			$output   .= $this->render_color_swatch( $color, $role['label'] );
 		}
 
 		$output .= '</span>';
@@ -354,7 +355,7 @@ class Term_Color_Meta {
 				esc_attr( $hex_color ),
 				esc_attr( $size ),
 				esc_attr( $size ),
-				esc_attr( sanitize_hex_color( $hex_color ) )
+				esc_attr( sanitize_hex_color( $hex_color ) ?? $hex_color )
 			);
 		}
 

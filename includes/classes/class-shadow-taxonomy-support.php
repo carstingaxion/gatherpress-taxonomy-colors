@@ -104,10 +104,12 @@ class Shadow_Taxonomy_Support {
 			}
 
 			// Optional cross-check with GatherPress canonical helper.
-			if (
-				class_exists( '\\GatherPress\\Core\\Shadow_Source' ) &&
-				method_exists( '\\GatherPress\\Core\\Shadow_Source', 'get_instance' )
-			) {
+			if ( class_exists( '\GatherPress\Core\Shadow_Source' ) ) {
+				/**
+				 * Type safety
+				 *
+				 * @var object $shadow_source
+				 */
 				$shadow_source = \GatherPress\Core\Shadow_Source::get_instance();
 
 				if ( method_exists( $shadow_source, 'is_shadow_term_slug' ) && ! $shadow_source->is_shadow_term_slug( $slug ) ) {
@@ -165,17 +167,19 @@ class Shadow_Taxonomy_Support {
 		 *
 		 * @since  0.1.2
 		 * @param  WP_Post $post             The source post.
-		 * @param  string   $shadow_taxonomy  The shadow taxonomy slug.
+		 * @param  string  $shadow_taxonomy  The shadow taxonomy slug.
 		 * @return WP_Term|null The shadow term, or null.
 		 */
 	public function resolve_shadow_term( WP_Post $post, string $shadow_taxonomy ): ?WP_Term {
-		if (
-			! class_exists( '\\GatherPress\\Core\\Shadow_Source' ) ||
-			! method_exists( '\\GatherPress\\Core\\Shadow_Source', 'get_instance' )
-		) {
+		if ( ! class_exists( '\GatherPress\Core\Shadow_Source' ) ) {
 			return null;
 		}
 
+		/**
+		 * Type safety
+		 *
+		 * @var object $shadow_source
+		 */
 		$shadow_source = \GatherPress\Core\Shadow_Source::get_instance();
 
 		if ( ! method_exists( $shadow_source, 'term_slug_from_post_name' ) ) {
@@ -184,7 +188,7 @@ class Shadow_Taxonomy_Support {
 
 		$term_slug = $shadow_source->term_slug_from_post_name( $post->post_name );
 
-		if ( empty( $term_slug ) ) {
+		if ( ! is_string( $term_slug ) || '' === $term_slug ) {
 			return null;
 		}
 
@@ -257,7 +261,12 @@ class Shadow_Taxonomy_Support {
 			return;
 		}
 
-		$asset = require $asset_file;
+		/**
+		 * Type safety
+		 *
+		 * @var array{dependencies: string[], version: string} $asset
+		 */
+		$asset = require $asset_file; // phpcs:ignore WordPressVIPMinimum.Files.IncludingFile.UsingVariable
 
 		wp_enqueue_script(
 			$handle,
@@ -369,7 +378,8 @@ class Shadow_Taxonomy_Support {
 
 		echo '<span style="display:inline-flex;align-items:center;gap:4px;">';
 		foreach ( $roles as $role ) {
-			$color = $term ? get_term_meta( $term->term_id, $role['meta_key'], true ) : '';
+			$raw   = $term ? get_term_meta( $term->term_id, $role['meta_key'], true ) : '';
+			$color = is_string( $raw ) ? $raw : '';
 			echo $this->render_admin_swatch( $color, $role['label'], $size ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
 		}
 		echo '</span>';
@@ -392,7 +402,7 @@ class Shadow_Taxonomy_Support {
 				esc_attr( $hex_color ),
 				esc_attr( $size ),
 				esc_attr( $size ),
-				esc_attr( sanitize_hex_color( $hex_color ) )
+				esc_attr( sanitize_hex_color( $hex_color ) ?? $hex_color )
 			);
 		}
 

@@ -18,6 +18,7 @@ namespace GatherpressTaxonomyColors;
 use GatherPress\Core;
 use WP_Block;
 use WP_HTML_Tag_Processor;
+use WP_Term;
 
 // Exit if accessed directly.
 defined( 'ABSPATH' ) || exit; // @codeCoverageIgnore
@@ -57,8 +58,8 @@ class Term_Color_Scoper {
 		 * Builds scoped inline style declarations for a set of resolved colors.
 		 *
 		 * @since  0.1.0
-		 * @param  array<string, string>                                                  $colors      Resolved slot slug to hex map.
-		 * @param  array<string, array{slug: string, property: string, fallback: string}> $slot_lookup Slot definitions keyed by slug.
+		 * @param  array<string, string>                                                                                                    $colors      Resolved slot slug to hex map.
+		 * @param  array<string, array{slug: string, name: string, property: string, fallback: string, taxonomy: string, meta_key: string}> $slot_lookup Slot definitions keyed by slug.
 		 * @return string Inline style declarations string.
 		 */
 	private function build_scoped_style_declarations( array $colors, array $slot_lookup ): string {
@@ -88,7 +89,7 @@ class Term_Color_Scoper {
 		 * Builds the slot lookup array keyed by slug from the token definitions.
 		 *
 		 * @since  0.1.0
-		 * @return array<string, array{slug: string, property: string, fallback: string}>
+		 * @return array<string, array{slug: string, name: string, property: string, fallback: string, taxonomy: string, meta_key: string}>
 		 */
 	private function get_slot_lookup(): array {
 		$slots  = Term_Color_Tokens::get_instance()->get_term_color_slots();
@@ -106,7 +107,7 @@ class Term_Color_Scoper {
 		 *
 		 * @since  0.1.1
 		 * @param  WP_HTML_Tag_Processor $processor          Tag processor positioned on the target element.
-		 * @param  string                 $style_declarations CSS custom property declarations to inject.
+		 * @param  string                $style_declarations CSS custom property declarations to inject.
 		 * @return void
 		 */
 	private function apply_scoped_styles( WP_HTML_Tag_Processor $processor, string $style_declarations ): void {
@@ -143,7 +144,7 @@ class Term_Color_Scoper {
 		) ) {
 			$class_attr = $processor->get_attribute( 'class' );
 
-			if ( ! $class_attr ) {
+			if ( ! is_string( $class_attr ) ) {
 				continue;
 			}
 
@@ -198,22 +199,23 @@ class Term_Color_Scoper {
 		 * core/post-terms blocks using the "Term Colors" style.
 		 *
 		 * @since  0.1.0
-		 * @param  string    $block_content Rendered block HTML.
-		 * @param  array     $block         Parsed block array.
-		 * @param  WP_Block $instance      Block instance.
+		 * @param  string               $block_content Rendered block HTML.
+		 * @param  array<string, mixed> $block         Parsed block array.
+		 * @param  WP_Block             $instance      Block instance.
 		 * @return string Modified block content.
 		 */
-	public function inject_post_terms_color_properties( string $block_content, array $block, WP_Block $instance ): string {
-		$class_name = $block['attrs']['className'] ?? '';
+	public function inject_post_terms_color_properties( string $block_content, array $block, WP_Block $instance ): string { // phpcs:ignore Generic.CodeAnalysis.UnusedFunctionParameter.FoundAfterLastUsed
+		$attrs      = is_array( $block['attrs'] ?? null ) ? $block['attrs'] : array();
+		$class_name = is_string( $attrs['className'] ?? null ) ? $attrs['className'] : '';
 
 		if ( false === strpos( $class_name, 'is-style-term-colors' ) ) {
 			return $block_content;
 		}
 
-		$taxonomy = $block['attrs']['term'] ?? 'category';
-		$post_id  = $instance->context['postId'] ?? get_the_ID();
+		$taxonomy = is_string( $attrs['term'] ?? null ) ? $attrs['term'] : 'category';
+		$post_id  = $this->resolve_post_id( $instance );
 
-		if ( ! $post_id ) {
+		if ( $post_id <= 0 ) {
 			return $block_content;
 		}
 
@@ -224,74 +226,128 @@ class Term_Color_Scoper {
 		}
 
 		$normalized_tax = Helpers::normalize_taxonomy_slug( $taxonomy );
-		$slot_lookup    = $this->get_slot_lookup();
-		$roles          = Helpers::get_color_roles();
+		$term_color_map = $this->build_term_color_map( $post_terms );
 
-		$term_color_map = array();
+		if ( empty( $term_color_map ) ) {
+			return $block_content;
+		}
 
-		foreach ( $post_terms as $term ) {
+		return $this->apply_term_colors_to_links(
+			$block_content,
+			$term_color_map,
+			$normalized_tax
+		);
+	}
+
+	/**
+	 * Resolves the current post ID from block context or the global post.
+	 *
+	 * @since  0.3.0
+	 * @param  WP_Block $instance Block instance.
+	 * @return int Post ID, or 0 if not determinable.
+	 */
+	private function resolve_post_id( WP_Block $instance ): int {
+		$raw = $instance->context['postId'] ?? get_the_ID();
+		return is_int( $raw ) ? $raw : ( is_numeric( $raw ) ? (int) $raw : 0 );
+	}
+
+	/**
+	 * Builds a URL-path-keyed map of role-slug => hex color
+	 * for a set of terms, resolved from term meta.
+	 *
+	 * @since  0.3.0
+	 * @param  WP_Term[] $terms Terms to resolve colors for.
+	 * @return array<string, array<string, string>> Path-keyed map.
+	 */
+	private function build_term_color_map( array $terms ): array { // phpcs:ignore Generic.CodeAnalysis.UnusedFunctionParameter.FoundAfterLastUsed
+		$roles = Helpers::get_color_roles();
+		$map   = array();
+
+		foreach ( $terms as $term ) {
 			$term_link = get_term_link( $term );
 
 			if ( is_wp_error( $term_link ) ) {
 				continue;
 			}
 
-			$has_any_color = false;
-			$term_colors   = array();
+			$term_colors = $this->resolve_term_role_colors( $term, $roles );
 
-			foreach ( $roles as $role ) {
-				$color = get_term_meta( $term->term_id, $role['meta_key'], true );
-				if ( $color ) {
-					$term_colors[ $role['slug'] ] = sanitize_hex_color( $color );
-					$has_any_color                = true;
-				}
-			}
-
-			if ( ! $has_any_color ) {
+			if ( empty( $term_colors ) ) {
 				continue;
 			}
 
-			$parsed_path = wp_parse_url( $term_link, PHP_URL_PATH );
-			$normal_key  = $parsed_path ? untrailingslashit( $parsed_path ) : untrailingslashit( $term_link );
-
-			$term_color_map[ $normal_key ] = $term_colors;
+			$parsed_path        = wp_parse_url( $term_link, PHP_URL_PATH );
+			$normal_key         = is_string( $parsed_path ) ? untrailingslashit( $parsed_path ) : untrailingslashit( $term_link );
+			$map[ $normal_key ] = $term_colors;
 		}
 
-		if ( empty( $term_color_map ) ) {
-			return $block_content;
+		return $map;
+	}
+
+	/**
+	 * Resolves hex colors for all roles of a single term.
+	 *
+	 * @since  0.3.0
+	 * @param  WP_Term                                                                                                                     $term  Term to resolve.
+	 * @param  array<int, array{slug: string, label: string, meta_key: string}>|list<array{slug: string, label: string, meta_key: string}> $roles Color role definitions.
+	 * @return array<string, string> Role-slug => hex map (empty when no color set).
+	 */
+	private function resolve_term_role_colors( WP_Term $term, array $roles ): array {
+		$colors = array();
+
+		foreach ( $roles as $role ) {
+			$raw = get_term_meta( $term->term_id, $role['meta_key'], true );
+			if ( ! is_string( $raw ) || '' === $raw ) {
+				continue;
+			}
+			$sanitized = sanitize_hex_color( $raw );
+			if ( null !== $sanitized ) {
+				$colors[ $role['slug'] ] = $sanitized;
+			}
 		}
 
-		$processor = new WP_HTML_Tag_Processor( $block_content );
+		return $colors;
+	}
 
-		while ( $processor->next_tag( 'A' ) ) {
+	/**
+	 * Walks all <a> tags in the block HTML and injects scoped color
+	 * custom properties onto those whose href matches a term in the map.
+	 *
+	 * @since  0.3.0
+	 * @param  string                               $block_content  Rendered block HTML.
+	 * @param  array<string, array<string, string>> $term_color_map Path-keyed color map.
+	 * @param  string                               $normalized_tax Normalized taxonomy slug.
+	 * @return string Modified block HTML.
+	 */
+	private function apply_term_colors_to_links( string $block_content, array $term_color_map, string $normalized_tax ): string {
+		$slot_lookup = $this->get_slot_lookup();
+		$processor   = new WP_HTML_Tag_Processor( $block_content );
+
+		while ( $processor->next_tag( array( 'tag_name' => 'A' ) ) ) {
 			$href = $processor->get_attribute( 'href' );
 
-			if ( ! $href ) {
+			if ( ! is_string( $href ) ) {
 				continue;
 			}
 
 			$href_path  = wp_parse_url( $href, PHP_URL_PATH );
-			$normal_key = $href_path ? untrailingslashit( $href_path ) : untrailingslashit( $href );
+			$normal_key = is_string( $href_path ) ? untrailingslashit( $href_path ) : untrailingslashit( $href );
 
 			if ( ! isset( $term_color_map[ $normal_key ] ) ) {
 				continue;
 			}
 
-			$colors   = $term_color_map[ $normal_key ];
 			$resolved = array();
-
-			foreach ( $colors as $role_slug => $hex ) {
+			foreach ( $term_color_map[ $normal_key ] as $role_slug => $hex ) {
 				$resolved[ $normalized_tax . '-' . $role_slug ] = $hex;
 			}
 
-			if ( empty( $resolved ) ) {
-				continue;
+			if ( ! empty( $resolved ) ) {
+				$this->apply_scoped_styles(
+					$processor,
+					$this->build_scoped_style_declarations( $resolved, $slot_lookup )
+				);
 			}
-
-			$this->apply_scoped_styles(
-				$processor,
-				$this->build_scoped_style_declarations( $resolved, $slot_lookup )
-			);
 		}
 
 		return $processor->get_updated_html();

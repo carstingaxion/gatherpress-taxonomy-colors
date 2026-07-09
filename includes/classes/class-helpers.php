@@ -30,7 +30,7 @@ class Helpers {
 		 * Cached color roles array.
 		 *
 		 * @since 0.2.0
-		 * @var array|null
+		 * @var list<array{slug: string, label: string, meta_key: string}>|null
 		 */
 	private static ?array $color_roles_cache = null;
 
@@ -141,6 +141,11 @@ class Helpers {
 		 * } );
 		 * ```
 		 */
+		/**
+		 * Type safety
+		 *
+		 * @var array<int, array{slug: string, label: string, meta_key: string}> $roles
+		 */
 		$roles = (array) apply_filters( 'gptc_term_color_roles', $defaults );
 
 		// Validate and normalize.
@@ -219,7 +224,7 @@ class Helpers {
 		 * entries sharing the same slug, and returns the updated object.
 		 *
 		 * @since  0.1.1
-		 * @param  WP_Theme_JSON_Data                                          $theme_json  Theme JSON data.
+		 * @param  WP_Theme_JSON_Data                                           $theme_json  Theme JSON data.
 		 * @param  array<int, array{slug: string, color: string, name: string}> $new_items   Palette entries to merge.
 		 * @return WP_Theme_JSON_Data Modified theme JSON data.
 		 */
@@ -228,13 +233,19 @@ class Helpers {
 			return $theme_json;
 		}
 
-		$existing_data = $theme_json->get_data();
-		// @todo Depending if custom palettes are enabled.
-		$palette          = ( 1 === 2 ) ? 'custom' : 'theme';
-		$existing_palette = $existing_data['settings']['color']['palette'][ $palette ] ?? array();
+		/**
+		 * Type safety
+		 *
+		 * @var array<string, mixed> $existing_data
+		 */
+		$existing_data    = $theme_json->get_data();
+		$settings         = is_array( $existing_data['settings'] ?? null ) ? $existing_data['settings'] : array();
+		$color            = is_array( $settings['color'] ?? null ) ? $settings['color'] : array();
+		$palette_data     = is_array( $color['palette'] ?? null ) ? $color['palette'] : array();
+		$existing_palette = is_array( $palette_data['theme'] ?? null ) ? $palette_data['theme'] : array();
 		$indexed          = array();
 		foreach ( $existing_palette as $entry ) {
-			if ( isset( $entry['slug'] ) ) {
+			if ( is_array( $entry ) && isset( $entry['slug'] ) && is_string( $entry['slug'] ) ) {
 				$indexed[ $entry['slug'] ] = $entry;
 			}
 		}
@@ -248,7 +259,7 @@ class Helpers {
 				'settings' => array(
 					'color' => array(
 						'palette' => array(
-							$palette => array_values( $indexed ),
+							'theme' => array_values( $indexed ),
 						),
 					),
 				),
@@ -265,7 +276,7 @@ class Helpers {
 		 *
 		 * @since  0.1.1
 		 * @param  WP_Term[] $terms          Array of term objects.
-		 * @param  string     $normalized_tax Normalized taxonomy slug.
+		 * @param  string    $normalized_tax Normalized taxonomy slug.
 		 * @return array<string, string> Slot slug to hex color map (may be empty).
 		 */
 	public static function resolve_colors_from_terms( array $terms, string $normalized_tax ): array {
@@ -292,7 +303,10 @@ class Helpers {
 				$value = self::get_inherited_term_color( $term, $role['meta_key'] );
 
 				if ( $value ) {
-					$colors[ $normalized_tax . '-' . $role['slug'] ] = sanitize_hex_color( $value );
+					$sanitized = sanitize_hex_color( $value );
+					if ( null !== $sanitized ) {
+						$colors[ $normalized_tax . '-' . $role['slug'] ] = $sanitized;
+					}
 				}
 			}
 
@@ -312,15 +326,15 @@ class Helpers {
 		 *
 		 * @since  0.1.4
 		 * @param  WP_Term $term     The starting term.
-		 * @param  string   $meta_key The meta key to look up.
+		 * @param  string  $meta_key The meta key to look up.
 		 * @return string The meta value (hex color) or empty string.
 		 */
 	public static function get_inherited_term_color( WP_Term $term, string $meta_key ): string {
 		// Check the term itself first.
 		$value = get_term_meta( $term->term_id, $meta_key, true );
 
-		if ( $value ) {
-			return (string) $value;
+		if ( is_string( $value ) && '' !== $value ) {
+			return $value;
 		}
 
 		// Only walk ancestors for hierarchical taxonomies.
@@ -344,8 +358,8 @@ class Helpers {
 
 			$parent_value = get_term_meta( $parent_term->term_id, $meta_key, true );
 
-			if ( $parent_value ) {
-				return (string) $parent_value;
+			if ( is_string( $parent_value ) && '' !== $parent_value ) {
+				return $parent_value;
 			}
 
 			$parent_id = (int) $parent_term->parent;
