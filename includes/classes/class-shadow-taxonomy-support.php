@@ -16,6 +16,9 @@ declare(strict_types=1);
 namespace GatherpressTaxonomyColors;
 
 use GatherPress\Core;
+use WP_Post;
+use WP_Screen;
+use WP_Term;
 
 // Exit if accessed directly.
 defined( 'ABSPATH' ) || exit; // @codeCoverageIgnore
@@ -161,11 +164,11 @@ class Shadow_Taxonomy_Support {
 		 * active or the term doesn't exist.
 		 *
 		 * @since  0.1.2
-		 * @param  \WP_Post $post             The source post.
+		 * @param  WP_Post $post             The source post.
 		 * @param  string   $shadow_taxonomy  The shadow taxonomy slug.
-		 * @return \WP_Term|null The shadow term, or null.
+		 * @return WP_Term|null The shadow term, or null.
 		 */
-	public function resolve_shadow_term( \WP_Post $post, string $shadow_taxonomy ): ?\WP_Term {
+	public function resolve_shadow_term( WP_Post $post, string $shadow_taxonomy ): ?WP_Term {
 		if (
 			! class_exists( '\\GatherPress\\Core\\Shadow_Source' ) ||
 			! method_exists( '\\GatherPress\\Core\\Shadow_Source', 'get_instance' )
@@ -187,7 +190,7 @@ class Shadow_Taxonomy_Support {
 
 		$term = get_term_by( 'slug', $term_slug, $shadow_taxonomy );
 
-		return ( $term instanceof \WP_Term ) ? $term : null;
+		return ( $term instanceof WP_Term ) ? $term : null;
 	}
 
 		/**
@@ -200,7 +203,7 @@ class Shadow_Taxonomy_Support {
 	public function resolve_shadow_colors_for_post( int $post_id ): array {
 		$post = get_post( $post_id );
 
-		if ( ! $post instanceof \WP_Post ) {
+		if ( ! $post instanceof WP_Post ) {
 			return array();
 		}
 
@@ -243,19 +246,14 @@ class Shadow_Taxonomy_Support {
 			);
 		}
 
-		// Shadow config is only needed when shadow taxonomies exist.
-		$map = $this->get_shadow_source_post_types();
+		$json = wp_json_encode( $this->get_shadow_source_post_types() );
 
-		if ( ! empty( $map ) ) {
-			$json = wp_json_encode( $map );
-
-			if ( false !== $json ) {
-				wp_add_inline_script(
-					$handle,
-					sprintf( 'window.gptcShadowConfig = %s;', $json ),
-					'before'
-				);
-			}
+		if ( false !== $json ) {
+			wp_add_inline_script(
+				$handle,
+				sprintf( 'window.gptcShadowConfig = %s;', $json ),
+				'before'
+			);
 		}
 	}
 
@@ -312,7 +310,7 @@ class Shadow_Taxonomy_Support {
 
 		$post = get_post( $post_id );
 
-		if ( ! $post instanceof \WP_Post ) {
+		if ( ! $post instanceof WP_Post ) {
 			return;
 		}
 

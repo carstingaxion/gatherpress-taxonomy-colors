@@ -12,6 +12,10 @@ declare(strict_types=1);
 
 namespace GatherpressTaxonomyColors;
 
+use WP_Post;
+use WP_Term;
+use WP_Theme_JSON_Data;
+
 // Exit if accessed directly.
 defined( 'ABSPATH' ) || exit; // @codeCoverageIgnore
 
@@ -215,11 +219,11 @@ class Helpers {
 		 * entries sharing the same slug, and returns the updated object.
 		 *
 		 * @since  0.1.1
-		 * @param  \WP_Theme_JSON_Data                                          $theme_json  Theme JSON data.
+		 * @param  WP_Theme_JSON_Data                                          $theme_json  Theme JSON data.
 		 * @param  array<int, array{slug: string, color: string, name: string}> $new_items   Palette entries to merge.
-		 * @return \WP_Theme_JSON_Data Modified theme JSON data.
+		 * @return WP_Theme_JSON_Data Modified theme JSON data.
 		 */
-	public static function merge_palette_into_theme_json( \WP_Theme_JSON_Data $theme_json, array $new_items ): \WP_Theme_JSON_Data {
+	public static function merge_palette_into_theme_json( WP_Theme_JSON_Data $theme_json, array $new_items ): WP_Theme_JSON_Data {
 		if ( empty( $new_items ) ) {
 			return $theme_json;
 		}
@@ -260,7 +264,7 @@ class Helpers {
 		 * from an ancestor in a hierarchical taxonomy.
 		 *
 		 * @since  0.1.1
-		 * @param  \WP_Term[] $terms          Array of term objects.
+		 * @param  WP_Term[] $terms          Array of term objects.
 		 * @param  string     $normalized_tax Normalized taxonomy slug.
 		 * @return array<string, string> Slot slug to hex color map (may be empty).
 		 */
@@ -307,11 +311,11 @@ class Helpers {
 		 * guards against malformed data causing infinite loops.
 		 *
 		 * @since  0.1.4
-		 * @param  \WP_Term $term     The starting term.
+		 * @param  WP_Term $term     The starting term.
 		 * @param  string   $meta_key The meta key to look up.
 		 * @return string The meta value (hex color) or empty string.
 		 */
-	public static function get_inherited_term_color( \WP_Term $term, string $meta_key ): string {
+	public static function get_inherited_term_color( WP_Term $term, string $meta_key ): string {
 		// Check the term itself first.
 		$value = get_term_meta( $term->term_id, $meta_key, true );
 
@@ -334,7 +338,7 @@ class Helpers {
 		while ( $parent_id > 0 && $depth < $max_depth ) {
 			$parent_term = get_term( $parent_id, $term->taxonomy );
 
-			if ( ! $parent_term instanceof \WP_Term ) {
+			if ( ! $parent_term instanceof WP_Term ) {
 				break;
 			}
 
@@ -368,7 +372,7 @@ class Helpers {
 		$taxonomies = Plugin::get_instance()->get_color_taxonomies();
 		$post       = get_post( $post_id );
 
-		if ( ! $post instanceof \WP_Post ) {
+		if ( ! $post instanceof WP_Post ) {
 			return $colors;
 		}
 

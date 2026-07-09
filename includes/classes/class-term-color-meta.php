@@ -15,6 +15,7 @@ declare(strict_types=1);
 namespace GatherpressTaxonomyColors;
 
 use GatherPress\Core;
+use WP_Term;
 
 // Exit if accessed directly.
 defined( 'ABSPATH' ) || exit; // @codeCoverageIgnore
@@ -124,10 +125,10 @@ class Term_Color_Meta {
 		 * Renders the color picker fields on the "Edit Term" form.
 		 *
 		 * @since  0.1.0
-		 * @param  \WP_Term $term The term being edited.
+		 * @param  WP_Term $term The term being edited.
 		 * @return void
 		 */
-	public function render_edit_term_color_field( \WP_Term $term ): void {
+	public function render_edit_term_color_field( WP_Term $term ): void {
 		wp_nonce_field( 'gptc_save_term_color', 'gptc_term_color_nonce' );
 		$roles  = Helpers::get_color_roles();
 		$values = array();
