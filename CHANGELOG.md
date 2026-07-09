@@ -2,7 +2,18 @@
 
 All notable changes to this project will be documented in this file.
 
-## [Unreleased](https://github.com/carstingaxion/gatherpress-taxonomy-colors/compare/0.2.0...HEAD)
+## [Unreleased](https://github.com/carstingaxion/gatherpress-taxonomy-colors/compare/0.3.0...HEAD)
+
+## [0.3.0](https://github.com/carstingaxion/gatherpress-taxonomy-colors/compare/0.2.0...0.3.0) - 2026-07-09
+
+- Move phpstan comment to not interupt with extract-wp-hooks ([#26](https://github.com/carstingaxion/gatherpress-taxonomy-colors/pull/26))
+- Enhance type safety ([#24](https://github.com/carstingaxion/gatherpress-taxonomy-colors/pull/24))
+- Update hook docs automatically ([#23](https://github.com/carstingaxion/gatherpress-taxonomy-colors/pull/23))
+- Remove roadmap ([#22](https://github.com/carstingaxion/gatherpress-taxonomy-colors/pull/22))
+- Fix/unit tests failures ([#20](https://github.com/carstingaxion/gatherpress-taxonomy-colors/pull/20))
+- Add tests ([#17](https://github.com/carstingaxion/gatherpress-taxonomy-colors/pull/17))
+- Move files around ([#16](https://github.com/carstingaxion/gatherpress-taxonomy-colors/pull/16))
+- Bump actions/checkout from 6 to 7 ([#14](https://github.com/carstingaxion/gatherpress-taxonomy-colors/pull/14))
 
 ## [0.2.0](https://github.com/carstingaxion/gatherpress-taxonomy-colors/compare/0.1.2...0.2.0) - 2026-07-06
 
