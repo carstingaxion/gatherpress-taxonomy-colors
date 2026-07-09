@@ -1,21 +1,54 @@
-# /build/
-/node_modules
-/vendor
+# Logs and databases #
+######################
+*.log
 *.sql
-*.tar.gz
-*.zip
-!.wordpress-org/blueprints/gatherpress.zip
-/wiki
-.vscode
 
-
-/.wp-env.override.json
-
-# misc
-.DS_Store
+# OS generated files #
+######################
+.DS_Store*
+ehthumbs.db
 Thumbs.db
+._*
+*.css.map
+*.js.map
 
-# is created during composer install,
-# when package is tested
-# and not running within ft-platform
-/wp-content/
+# Editor/IDE generated files #
+######################
+*.un~
+.idea
+nbproject
+.netbeans.xml
+
+# SASS #
+##########
+.sass-cache
+
+# Node #
+##########
+node_modules
+npm-debug.log
+typings
+
+# Composer #
+##########
+vendor
+wp-content
+
+# .wp-env #
+##########
+wp-core
+.phpunit.result.cache
+coverage.xml
+.env
+
+# Playwright #
+##########
+playwright-report/
+test-results/
+
+# Jest / SonarCloud #
+##########
+coverage
+test-report.xml
+
+*.zip

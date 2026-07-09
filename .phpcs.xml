@@ -6,6 +6,7 @@
 	<arg name="basepath" value="./"/><!-- Strip the file paths down to the relevant bit -->
 
 	<exclude-pattern>*/build/*</exclude-pattern>
+	<exclude-pattern>*/test/*</exclude-pattern>
 	<exclude-pattern>*/vendor/*</exclude-pattern>
 
 	<exclude-pattern>*/wp-content/*</exclude-pattern>
@@ -28,6 +29,8 @@
 			<property name="prefixes" type="array">
 				<element value="gptc_"/>
 				<element value="GatherpressTaxonomyColors"/>
+				<element value="gatherpress_taxonomy_colors"/>
+				<element value="GATHERPRESS_TAXONOMY_COLORS"/>
 				<element value="__NAMESPACE__"/>
 			</property>
 

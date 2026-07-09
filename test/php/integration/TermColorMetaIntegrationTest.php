@@ -14,6 +14,7 @@
 namespace GatherpressTaxonomyColors\Tests\Integration;
 
 use GatherpressTaxonomyColors\Helpers;
+use GatherpressTaxonomyColors\Term_Color_Meta;
 
 /**
  * Class TermColorMetaIntegrationTest.
@@ -22,6 +23,23 @@ use GatherpressTaxonomyColors\Helpers;
  * @group term-color-meta
  */
 class TermColorMetaIntegrationTest extends TestCase {
+
+	/**
+	 * Re-registers term color meta before each test.
+	 *
+	 * WP_UnitTestCase::tearDown() calls unregister_all_meta_keys(), which
+	 * wipes $wp_meta_keys completely. The plugin's init hook only fires
+	 * once during bootstrap and is not re-triggered between tests, so meta
+	 * registered at bootstrap is gone by the time a later test runs.
+	 * Calling register_term_color_meta() directly here restores it.
+	 *
+	 * @since 0.1.0
+	 * @return void
+	 */
+	protected function setUp(): void {
+		parent::setUp();
+		Term_Color_Meta::get_instance()->register_term_color_meta();
+	}
 
 	// ── meta registration ─────────────────────────────────────────────────
 

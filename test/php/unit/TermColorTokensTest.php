@@ -134,15 +134,18 @@ class TermColorTokensTest extends \WP_UnitTestCase {
 	/**
 	 * Tests that the number of slots equals taxonomies × roles.
 	 *
+	 * Derives the expected count from the plugin's own get_color_taxonomies(),
+	 * filtered to those actually registered, mirroring what get_term_color_slots()
+	 * does internally.
+	 *
 	 * @since 0.1.0
 	 *
 	 * @covers ::get_term_color_slots
 	 * @return void
 	 */
 	public function test_slot_count_equals_taxonomies_times_roles(): void {
-		// Count only taxonomies that are actually registered (get_taxonomy returns object).
 		$taxonomies = array_filter(
-			apply_filters( 'gptc_term_color_taxonomies', array() ),
+			\GatherpressTaxonomyColors\Plugin::get_instance()->get_color_taxonomies(),
 			fn( $t ) => (bool) get_taxonomy( $t )
 		);
 		$roles      = Helpers::get_color_roles();
