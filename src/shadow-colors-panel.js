@@ -12,7 +12,13 @@
 
 import { __ } from '@wordpress/i18n';
 import { useSelect, useDispatch } from '@wordpress/data';
-import { useState, useEffect, useCallback, useRef } from '@wordpress/element';
+import {
+	useState,
+	useEffect,
+	useCallback,
+	useMemo,
+	useRef,
+} from '@wordpress/element';
 import {
 	PanelRow,
 	ColorPalette,
@@ -170,7 +176,7 @@ export default function ShadowColorsPanel() {
 
 	const config = window.gptcShadowConfig || {};
 	const taxonomySlug = config[ postType ] || '';
-	const colorRoles = window.gptcColorRoles || [];
+	const colorRoles = useMemo( () => window.gptcColorRoles || [], [] );
 
 	const [ termId, setTermId ] = useState( null );
 	const [ colorValues, setColorValues ] = useState( {} );
