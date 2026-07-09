@@ -25,26 +25,22 @@ class Plugin {
 
 	use Core\Traits\Singleton;
 
-
-		/**
-		 * Private constructor — registers the block and bootstraps
-		 * all sub-singletons.
-		 *
-		 * @since 0.1.0
-		 */
+	/**
+	 * Constructor — bootstraps all sub-singletons.
+	 *
+	 * @since 0.1.0
+	 */
 	protected function __construct() {
 		$this->setup_hooks();
 	}
 
-		/**
-		 * Register hooks.
-		 *
-		 * @since 0.1.0
-		 * @return void
-		 */
+	/**
+	 * Register hooks.
+	 *
+	 * @since 0.1.0
+	 * @return void
+	 */
 	protected function setup_hooks(): void {
-		add_action( 'init', array( $this, 'register_block' ) );
-
 		// Bootstrap sub-singletons — each self-registers its hooks.
 		Term_Color_Meta::get_instance();
 		Term_Color_Tokens::get_instance();
@@ -53,22 +49,12 @@ class Plugin {
 		Shadow_Taxonomy_Support::get_instance();
 	}
 
-		/**
-		 * Registers the Gutenberg block from the build directory.
-		 *
-		 * @since  0.1.0
-		 * @return void
-		 */
-	public function register_block(): void {
-		register_block_type( __DIR__ . '/build/' );
-	}
-
-		/**
-		 * Returns the list of taxonomy slugs that support term color meta.
-		 *
-		 * @since  0.1.0
-		 * @return array<int, string> Array of taxonomy slugs.
-		 */
+	/**
+	 * Returns the list of taxonomy slugs that support term color meta.
+	 *
+	 * @since  0.1.0
+	 * @return array<int, string> Array of taxonomy slugs.
+	 */
 	public function get_color_taxonomies(): array {
 		/**
 		 * Filters the taxonomies that participate in the term color system.
@@ -141,6 +127,3 @@ class Plugin {
 		);
 	}
 }
-
-	// Bootstrap the plugin.
-	Plugin::get_instance();
