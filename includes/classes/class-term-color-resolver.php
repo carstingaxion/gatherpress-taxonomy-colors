@@ -76,7 +76,7 @@ class Term_Color_Resolver {
 		// phpcs:ignore WordPress.Security.NonceVerification.Recommended
 		if ( ! empty( $_GET['post'] ) ) {
 			// phpcs:ignore WordPress.Security.NonceVerification.Recommended
-			$post_id = absint( $_GET['post'] );
+			$post_id = absint( is_scalar( $_GET['post'] ) ? $_GET['post'] : 0 );
 
 			if ( $post_id > 0 ) {
 				return $post_id;
@@ -182,7 +182,7 @@ class Term_Color_Resolver {
 				$slug = sanitize_key( $slot['slug'] );
 				return array(
 					'slug'  => $slug,
-					'color' => isset( $colors[ $slug ] ) ? $colors[ $slug ] : sanitize_hex_color( $slot['fallback'] ),
+					'color' => isset( $colors[ $slug ] ) ? $colors[ $slug ] : ( sanitize_hex_color( $slot['fallback'] ) ?? $slot['fallback'] ),
 					'name'  => $slot['name'],
 				);
 			},

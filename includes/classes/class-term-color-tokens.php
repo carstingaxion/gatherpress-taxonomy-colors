@@ -76,7 +76,7 @@ class Term_Color_Tokens {
 				continue;
 			}
 
-			$tax_label      = $tax_object->labels->singular_name;
+			$tax_label      = is_string( $tax_object->labels->singular_name ) ? $tax_object->labels->singular_name : $taxonomy;
 			$normalized_tax = Helpers::normalize_taxonomy_slug( $taxonomy );
 
 			// Determine a base hue for this taxonomy.

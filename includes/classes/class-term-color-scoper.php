@@ -57,8 +57,8 @@ class Term_Color_Scoper {
 		 * Builds scoped inline style declarations for a set of resolved colors.
 		 *
 		 * @since  0.1.0
-		 * @param  array<string, string>                                                  $colors      Resolved slot slug to hex map.
-		 * @param  array<string, array{slug: string, property: string, fallback: string}> $slot_lookup Slot definitions keyed by slug.
+		 * @param  array<string, string>                                                                                                    $colors      Resolved slot slug to hex map.
+		 * @param  array<string, array{slug: string, name: string, property: string, fallback: string, taxonomy: string, meta_key: string}> $slot_lookup Slot definitions keyed by slug.
 		 * @return string Inline style declarations string.
 		 */
 	private function build_scoped_style_declarations( array $colors, array $slot_lookup ): string {
@@ -88,7 +88,7 @@ class Term_Color_Scoper {
 		 * Builds the slot lookup array keyed by slug from the token definitions.
 		 *
 		 * @since  0.1.0
-		 * @return array<string, array{slug: string, property: string, fallback: string}>
+		 * @return array<string, array{slug: string, name: string, property: string, fallback: string, taxonomy: string, meta_key: string}>
 		 */
 	private function get_slot_lookup(): array {
 		$slots  = Term_Color_Tokens::get_instance()->get_term_color_slots();
@@ -106,7 +106,7 @@ class Term_Color_Scoper {
 		 *
 		 * @since  0.1.1
 		 * @param  WP_HTML_Tag_Processor $processor          Tag processor positioned on the target element.
-		 * @param  string                 $style_declarations CSS custom property declarations to inject.
+		 * @param  string                $style_declarations CSS custom property declarations to inject.
 		 * @return void
 		 */
 	private function apply_scoped_styles( WP_HTML_Tag_Processor $processor, string $style_declarations ): void {
@@ -143,7 +143,7 @@ class Term_Color_Scoper {
 		) ) {
 			$class_attr = $processor->get_attribute( 'class' );
 
-			if ( ! $class_attr ) {
+			if ( ! is_string( $class_attr ) ) {
 				continue;
 			}
 
@@ -198,22 +198,24 @@ class Term_Color_Scoper {
 		 * core/post-terms blocks using the "Term Colors" style.
 		 *
 		 * @since  0.1.0
-		 * @param  string    $block_content Rendered block HTML.
-		 * @param  array     $block         Parsed block array.
-		 * @param  WP_Block $instance      Block instance.
+		 * @param  string               $block_content Rendered block HTML.
+		 * @param  array<string, mixed> $block         Parsed block array.
+		 * @param  WP_Block             $instance      Block instance.
 		 * @return string Modified block content.
 		 */
-	public function inject_post_terms_color_properties( string $block_content, array $block, WP_Block $instance ): string {
-		$class_name = $block['attrs']['className'] ?? '';
+	public function inject_post_terms_color_properties( string $block_content, array $block, WP_Block $instance ): string { // phpcs:ignore Generic.CodeAnalysis.UnusedFunctionParameter.FoundAfterLastUsed
+		$attrs      = is_array( $block['attrs'] ?? null ) ? $block['attrs'] : array();
+		$class_name = is_string( $attrs['className'] ?? null ) ? $attrs['className'] : '';
 
 		if ( false === strpos( $class_name, 'is-style-term-colors' ) ) {
 			return $block_content;
 		}
 
-		$taxonomy = $block['attrs']['term'] ?? 'category';
-		$post_id  = $instance->context['postId'] ?? get_the_ID();
+		$taxonomy    = is_string( $attrs['term'] ?? null ) ? $attrs['term'] : 'category';
+		$raw_post_id = $instance->context['postId'] ?? get_the_ID();
+		$post_id     = is_int( $raw_post_id ) ? $raw_post_id : ( is_numeric( $raw_post_id ) ? (int) $raw_post_id : 0 );
 
-		if ( ! $post_id ) {
+		if ( $post_id <= 0 ) {
 			return $block_content;
 		}
 
@@ -240,10 +242,13 @@ class Term_Color_Scoper {
 			$term_colors   = array();
 
 			foreach ( $roles as $role ) {
-				$color = get_term_meta( $term->term_id, $role['meta_key'], true );
-				if ( $color ) {
-					$term_colors[ $role['slug'] ] = sanitize_hex_color( $color );
-					$has_any_color                = true;
+				$raw_color = get_term_meta( $term->term_id, $role['meta_key'], true );
+				if ( is_string( $raw_color ) && '' !== $raw_color ) {
+					$sanitized = sanitize_hex_color( $raw_color );
+					if ( null !== $sanitized ) {
+						$term_colors[ $role['slug'] ] = $sanitized;
+						$has_any_color                = true;
+					}
 				}
 			}
 
@@ -252,7 +257,7 @@ class Term_Color_Scoper {
 			}
 
 			$parsed_path = wp_parse_url( $term_link, PHP_URL_PATH );
-			$normal_key  = $parsed_path ? untrailingslashit( $parsed_path ) : untrailingslashit( $term_link );
+			$normal_key  = is_string( $parsed_path ) ? untrailingslashit( $parsed_path ) : untrailingslashit( $term_link );
 
 			$term_color_map[ $normal_key ] = $term_colors;
 		}
@@ -263,15 +268,15 @@ class Term_Color_Scoper {
 
 		$processor = new WP_HTML_Tag_Processor( $block_content );
 
-		while ( $processor->next_tag( 'A' ) ) {
+		while ( $processor->next_tag( array( 'tag_name' => 'A' ) ) ) {
 			$href = $processor->get_attribute( 'href' );
 
-			if ( ! $href ) {
+			if ( ! is_string( $href ) ) {
 				continue;
 			}
 
 			$href_path  = wp_parse_url( $href, PHP_URL_PATH );
-			$normal_key = $href_path ? untrailingslashit( $href_path ) : untrailingslashit( $href );
+			$normal_key = is_string( $href_path ) ? untrailingslashit( $href_path ) : untrailingslashit( $href );
 
 			if ( ! isset( $term_color_map[ $normal_key ] ) ) {
 				continue;
