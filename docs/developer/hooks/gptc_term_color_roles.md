@@ -78,7 +78,7 @@ add_filter( 'gptc_term_color_roles', function (): array {
 
 ## Files
 
-- [includes/classes/class-helpers.php:144](https://github.com/carstingaxion/gatherpress-taxonomy-colors/blob/main/includes/classes/class-helpers.php#L144)
+- [includes/classes/class-helpers.php:148](https://github.com/carstingaxion/gatherpress-taxonomy-colors/blob/main/includes/classes/class-helpers.php#L148)
 ```php
 apply_filters( 'gptc_term_color_roles', $defaults )
 ```
