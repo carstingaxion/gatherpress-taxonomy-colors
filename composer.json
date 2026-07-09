@@ -34,11 +34,6 @@
         "wpackagist-plugin/gatherpress": "*",
         "yoast/phpunit-polyfills": "^2.0"
     },
-    "scripts": {
-        "test": "phpunit",
-        "test:unit": "phpunit --testsuite unit",
-        "test:integration": "phpunit --testsuite integration"
-    },
     "repositories": [
         {
             "type": "composer",
@@ -65,5 +60,10 @@
         "altis": {
             "install-overrides": []
         }
+    },
+    "scripts": {
+        "test": "phpunit",
+        "test:integration": "phpunit --testsuite integration",
+        "test:unit": "phpunit --testsuite unit"
     }
 }
