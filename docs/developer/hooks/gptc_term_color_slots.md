@@ -91,7 +91,7 @@ add_filter( 'gptc_term_color_slots', function ( array $slots ): array {
 
 ## Files
 
-- [plugin.php:1049](https://github.com/carstingaxion/gatherpress-taxonomy-colors/blob/main/plugin.php#L1049)
+- [includes/classes/class-term-color-tokens.php:201](https://github.com/carstingaxion/gatherpress-taxonomy-colors/blob/main/includes/classes/class-term-color-tokens.php#L201)
 ```php
 apply_filters( 'gptc_term_color_slots', $slots )
 ```

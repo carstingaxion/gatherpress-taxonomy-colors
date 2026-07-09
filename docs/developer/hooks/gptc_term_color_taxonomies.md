@@ -65,19 +65,19 @@ add_filter( 'gptc_term_color_taxonomies', function ( array $taxonomies ): array 
 
 ## Files
 
-- [plugin.php:2126](https://github.com/carstingaxion/gatherpress-taxonomy-colors/blob/main/plugin.php#L2126)
+- [includes/classes/class-plugin.php:117](https://github.com/carstingaxion/gatherpress-taxonomy-colors/blob/main/includes/classes/class-plugin.php#L117)
 ```php
 apply_filters(
-				'gptc_term_color_taxonomies',
-				array(
-					'gatherpress_topic',
-					'_gatherpress_venue',
-					'_gatherpress_play',
-					'_gatherpress_season',
-					'post_tag',
-					'category'
-				)
+			'gptc_term_color_taxonomies',
+			array(
+				'gatherpress_topic',
+				'_gatherpress_venue',
+				'_gatherpress_play',
+				'_gatherpress_season',
+				'post_tag',
+				'category',
 			)
+		)
 ```
 
 
