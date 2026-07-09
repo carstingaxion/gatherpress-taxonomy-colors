@@ -148,8 +148,8 @@ class TermColorTokensTest extends \WP_UnitTestCase {
 			\GatherpressTaxonomyColors\Plugin::get_instance()->get_color_taxonomies(),
 			fn( $t ) => (bool) get_taxonomy( $t )
 		);
-		$roles    = Helpers::get_color_roles();
-		$expected = count( $taxonomies ) * count( $roles );
+		$roles      = Helpers::get_color_roles();
+		$expected   = count( $taxonomies ) * count( $roles );
 
 		$this->assertCount( $expected, $this->tokens->get_term_color_slots() );
 	}
