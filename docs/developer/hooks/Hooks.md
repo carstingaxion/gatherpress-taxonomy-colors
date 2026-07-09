@@ -1,7 +1,7 @@
 
 ## class-helpers.php
 
-- [`gptc_term_color_roles`](gptc_term_color_roles.md) Filters the term color roles (or amount of colors).
+- [`gptc_term_color_roles`](gptc_term_color_roles.md) Type safety
 
 ## class-plugin.php
 
