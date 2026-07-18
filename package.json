@@ -19,8 +19,8 @@
 	},
 	"main": "build/index.js",
 	"devDependencies": {
-		"@wordpress/env": "^11.10.0",
-		"@wordpress/scripts": "^32.6.0"
+		"@wordpress/env": "^11.11.0",
+		"@wordpress/scripts": "^33.0.0"
 	},
 	"scripts": {
 		"build": "wp-scripts build --webpack-copy-php",
