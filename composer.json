@@ -30,7 +30,7 @@
         "akirk/extract-wp-hooks": "dev-main",
         "figuren-theater/code-quality": "*",
         "phpunit/phpunit": "9.6",
-        "wp-phpunit/wp-phpunit": "^6.9",
+        "wp-phpunit/wp-phpunit": "^7.0",
         "wpackagist-plugin/gatherpress": "*",
         "yoast/phpunit-polyfills": "^2.0"
     },
