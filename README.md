@@ -41,6 +41,7 @@ The plugin implements a 6-layer architecture that integrates with WordPress's ex
 - **Query Loop aware** — Each post in a Query Loop renders with its own term colors, not just the last one resolved.
 - **Shadow taxonomy support** — Works with GatherPress's shadow taxonomy pattern for post types acting as quasi-taxonomies.
 - **Flexible color roles** — The `gptc_term_color_roles` filter lets theme authors define any number of color roles per term (e.g., `primary`, `secondary`, `accent`, `base`). All layers derive from this single source of truth.
+- **Configurable fallback colors** — Define a fallback color per taxonomy and role under **Settings → Taxonomy Colors**. Leave a field empty to keep the auto-generated default.
 - **Fully filterable** — `gptc_term_color_taxonomies` controls which taxonomies participate. `gptc_term_color_slots` controls the design token definitions. `gptc_term_color_roles` controls color roles per term.
 - **Zero configuration** — Install, activate, and assign colors to your terms. The design tokens are generated automatically.
 
@@ -92,11 +93,11 @@ Select any block that supports color settings (paragraph, heading, group, button
 
 ### What happens when a term has no color assigned?
 
-The design token falls back to a neutral muted color. Each taxonomy pair has a unique fallback so the palette swatches remain visually distinct.
+The design token falls back to a neutral muted color. Each taxonomy pair has a unique fallback so the palette swatches remain visually distinct. You can replace the auto-generated fallback colors under **Settings → Taxonomy Colors** — the `gptc_term_color_slots` filter still takes precedence over the settings values.
 
 ### Does this work with the Site Editor?
 
-Yes. When editing a specific post, colors resolve from that post's terms. When editing a template without post context, the neutral fallback colors are shown.
+Yes. When editing a specific post, colors resolve from that post's terms. When editing a template without post context, the fallback colors are shown (your defined colors, or the auto-generated defaults).
 
 ### What is shadow taxonomy support?
 

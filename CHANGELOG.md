@@ -4,6 +4,8 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased](https://github.com/carstingaxion/gatherpress-taxonomy-colors/compare/0.3.0...HEAD)
 
+- Add a Settings screen (Settings → Taxonomy Colors) to define fallback colors per design token slot. Stored values replace the auto-generated fallbacks before the `gptc_term_color_slots` filter runs.
+
 ## [0.3.0](https://github.com/carstingaxion/gatherpress-taxonomy-colors/compare/0.2.0...0.3.0) - 2026-07-09
 
 - Move phpstan comment to not interupt with extract-wp-hooks ([#26](https://github.com/carstingaxion/gatherpress-taxonomy-colors/pull/26))

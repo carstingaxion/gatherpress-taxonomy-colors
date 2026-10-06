@@ -57,14 +57,17 @@ class Term_Color_Tokens {
 		 * role per taxonomy.
 		 *
 		 * Only includes slots for taxonomies that are currently registered.
+		 * Generated fallbacks are replaced by user-defined values from the
+		 * settings screen (Term_Color_Settings) before the filter runs.
 		 *
 		 * @since  0.1.0
 		 * @return array<int, array{slug: string, name: string, property: string, fallback: string, taxonomy: string, meta_key: string}>
 		 */
 	public function get_term_color_slots(): array {
-		$taxonomies = Plugin::get_instance()->get_color_taxonomies();
-		$roles      = Helpers::get_color_roles();
-		$slots      = array();
+		$taxonomies       = Plugin::get_instance()->get_color_taxonomies();
+		$roles            = Helpers::get_color_roles();
+		$slots            = array();
+		$stored_fallbacks = Term_Color_Settings::get_instance()->get_stored_fallback_colors();
 
 		// Base fallback hues per taxonomy index for deterministic neutral colors.
 		$base_hues = array( 30, 200, 100, 300, 50, 180 );
@@ -92,9 +95,13 @@ class Term_Color_Tokens {
 				$saturation = max( 8, 15 - ( $role_index * 3 ) );
 				$lightness  = min( 75, 50 + ( $role_index * 10 ) );
 				$fallback   = self::hsl_to_hex( $base_hue, $saturation, $lightness );
+				$slug       = $normalized_tax . '-' . $role['slug'];
+
+				// A user-defined fallback from the settings screen replaces the generated one.
+				$fallback = $stored_fallbacks[ $slug ] ?? $fallback;
 
 				$slots[] = array(
-					'slug'     => $normalized_tax . '-' . $role['slug'],
+					'slug'     => $slug,
 					'name'     => sprintf(
 						/* translators: 1: taxonomy label, 2: role label (Primary/Secondary/etc.) */
 						__( '%1$s Color (%2$s)', 'gatherpress-taxonomy-colors' ),
@@ -127,6 +134,10 @@ class Term_Color_Tokens {
 	 *   the editor palette.
 	 * - **Change fallback colors** to match your theme's neutral palette.
 	 * - **Rename** slot labels for editor UX clarity.
+	 *
+	 * Note: user-defined fallback colors from the settings screen
+	 * (Settings → Taxonomy Colors) are already merged into the generated
+	 * slots before this filter runs, so the filter keeps final precedence.
 	 *
 	 * Each slot array contains:
 	 *

@@ -47,6 +47,7 @@ class Plugin {
 		Term_Color_Resolver::get_instance();
 		Term_Color_Scoper::get_instance();
 		Shadow_Taxonomy_Support::get_instance();
+		Term_Color_Settings::get_instance();
 	}
 
 	/**
