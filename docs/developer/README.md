@@ -132,6 +132,7 @@ You might ask: why not inject `--wp--preset--color--category-primary` directly? 
 - ✅ `get_term_color_slots()` dynamically generates slot pairs from `get_color_taxonomies()`, using each taxonomy's registered label for human-readable names.
 - ✅ Each slot carries `taxonomy` and `meta_key` fields for resolution traceability.
 - ✅ Filterable slot definitions via `gptc_term_color_slots` filter — themes/plugins can add tertiary slots, change fallbacks, or remove a taxonomy's slots entirely.
+- ✅ User-defined fallback colors from the Settings screen (`gptc_fallback_colors` option, see `Term_Color_Settings`) replace the generated fallbacks before the filter runs — the filter keeps final precedence.
 - ✅ `wp_theme_json_data_theme` filter merges all slots into the theme-origin palette via `update_with()` using literal fallback hex values.
 - ✅ Separate CSS override (`inject_preset_custom_property_overrides()`) re-declares each `--wp--preset--color--{slug}` with `var(--flavor--{slug}, {fallback})` on both frontend and editor.
 - ✅ Architectural pivot: works around WordPress core's palette sanitizer stripping `var()` from theme.json color values.
