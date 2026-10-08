@@ -4,6 +4,7 @@
  *
  * Injects scoped --flavor--* and --wp--preset--color--* CSS custom
  * properties onto each post item inside a Query Loop (core/post-template),
+ * onto each entry of a GatherPress Calendar (gatherpress/calendar-entries),
  * and per term-link inside a core/post-terms block using the "Term Colors"
  * block style.
  *
@@ -50,6 +51,7 @@ class Term_Color_Scoper {
 		 */
 	protected function setup_hooks(): void {
 		add_filter( 'render_block_core/post-template', array( $this, 'scope_term_colors_to_post_template' ) );
+		add_filter( 'render_block_gatherpress/calendar-entries', array( $this, 'scope_term_colors_to_calendar_entries' ) );
 		add_action( 'init', array( $this, 'register_post_terms_block_style' ) );
 		add_filter( 'render_block_core/post-terms', array( $this, 'inject_post_terms_color_properties' ), 10, 3 );
 	}
@@ -127,6 +129,33 @@ class Term_Color_Scoper {
 		 * @return string Modified block content.
 		 */
 	public function scope_term_colors_to_post_template( string $block_content ): string {
+		return $this->scope_term_colors_to_items( $block_content, 'LI', 'wp-block-post' );
+	}
+
+	/**
+	 * Injects scoped term color properties per event inside calendar-entries.
+	 *
+	 * Each entry of the GatherPress Calendar has a post-{ID} class,
+	 * like Query Loop items, so the same per-post resolution applies.
+	 *
+	 * @since  0.4.0
+	 * @param  string $block_content Rendered calendar-entries HTML.
+	 * @return string Modified block content.
+	 */
+	public function scope_term_colors_to_calendar_entries( string $block_content ): string {
+		return $this->scope_term_colors_to_items( $block_content, 'DIV', 'gatherpress-calendar__entry' );
+	}
+
+	/**
+	 * Injects scoped term color properties onto each item with a post-{ID} class.
+	 *
+	 * @since  0.4.0
+	 * @param  string $block_content Rendered block HTML.
+	 * @param  string $tag_name      Tag name of the items.
+	 * @param  string $class_name    Class name of the items.
+	 * @return string Modified block content.
+	 */
+	private function scope_term_colors_to_items( string $block_content, string $tag_name, string $class_name ): string {
 		$trimmed = trim( $block_content );
 		if ( '' === $trimmed ) {
 			return $block_content;
@@ -138,8 +167,8 @@ class Term_Color_Scoper {
 
 		while ( $processor->next_tag(
 			array(
-				'tag_name'   => 'LI',
-				'class_name' => 'wp-block-post',
+				'tag_name'   => $tag_name,
+				'class_name' => $class_name,
 			)
 		) ) {
 			$class_attr = $processor->get_attribute( 'class' );

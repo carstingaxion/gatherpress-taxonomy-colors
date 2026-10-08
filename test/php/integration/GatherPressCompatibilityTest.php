@@ -15,6 +15,7 @@
 namespace GatherpressTaxonomyColors\Tests\Integration;
 
 use GatherpressTaxonomyColors\Plugin;
+use GatherpressTaxonomyColors\Term_Color_Scoper;
 
 /**
  * Class GatherPressCompatibilityTest.
@@ -204,6 +205,63 @@ class GatherPressCompatibilityTest extends TestCase {
 			has_filter( 'render_block_core/post-template' ),
 			'render_block_core/post-template filter must be registered by Term_Color_Scoper.'
 		);
+	}
+
+	/**
+	 * Tests that render_block_gatherpress/calendar-entries is hooked by Term_Color_Scoper.
+	 *
+	 * @since 0.4.0
+	 *
+	 * @return void
+	 */
+	public function test_render_block_calendar_entries_filter_hooked(): void {
+		$this->assertGreaterThan(
+			0,
+			has_filter( 'render_block_gatherpress/calendar-entries' ),
+			'render_block_gatherpress/calendar-entries filter must be registered by Term_Color_Scoper.'
+		);
+	}
+
+	/**
+	 * Tests that each calendar entry gets the term colors of its own event.
+	 *
+	 * @since 0.4.0
+	 *
+	 * @return void
+	 */
+	public function test_calendar_entries_get_term_colors_per_event(): void {
+		$red_post  = $this->factory()->post->create();
+		$blue_post = $this->factory()->post->create();
+		$red_term  = $this->create_term( 'Red', 'category' );
+		$blue_term = $this->create_term( 'Blue', 'category' );
+		$this->set_term_color( $red_term, '#ff0000' );
+		$this->set_term_color( $blue_term, '#0000ff' );
+		wp_set_object_terms( $red_post, $red_term, 'category' );
+		wp_set_object_terms( $blue_post, $blue_term, 'category' );
+
+		$html = sprintf(
+			'<div class="wp-block-gatherpress-calendar-entries"><div class="gatherpress-calendar__entry post-%1$d" style="color:red"></div><div class="gatherpress-calendar__entry post-%2$d"></div><div class="gatherpress-calendar__entry"></div></div>',
+			$red_post,
+			$blue_post
+		);
+
+		$processor = new \WP_HTML_Tag_Processor(
+			Term_Color_Scoper::get_instance()->scope_term_colors_to_calendar_entries( $html )
+		);
+
+		$processor->next_tag( array( 'class_name' => 'gatherpress-calendar__entry' ) );
+		$red_style = (string) $processor->get_attribute( 'style' );
+		$this->assertStringContainsString( '#ff0000', $red_style );
+		$this->assertStringNotContainsString( '#0000ff', $red_style );
+		$this->assertStringEndsWith( 'color:red', $red_style, 'Existing inline styles must be kept.' );
+
+		$processor->next_tag( array( 'class_name' => 'gatherpress-calendar__entry' ) );
+		$blue_style = (string) $processor->get_attribute( 'style' );
+		$this->assertStringContainsString( '#0000ff', $blue_style );
+		$this->assertStringNotContainsString( '#ff0000', $blue_style );
+
+		$processor->next_tag( array( 'class_name' => 'gatherpress-calendar__entry' ) );
+		$this->assertNull( $processor->get_attribute( 'style' ), 'Entries without a post-{ID} class must stay unchanged.' );
 	}
 
 	/**
