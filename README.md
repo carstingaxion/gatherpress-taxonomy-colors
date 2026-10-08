@@ -39,6 +39,7 @@ The plugin implements a 6-layer architecture that integrates with WordPress's ex
 - **Native integration** — Colors appear in the standard block editor color picker. Any block that supports color attributes can use them.
 - **Per-taxonomy slots** — A post in category "Technology" (blue) and tagged "Breaking" (red) resolves both colors independently.
 - **Query Loop aware** — Each post in a Query Loop renders with its own term colors, not just the last one resolved.
+- **GatherPress Calendar aware** — Each entry of a [GatherPress Calendar](https://github.com/carstingaxion/gatherpress-calendar) gets the term colors of its own event. Pick a term color slot as the Text color of the Calendar Entries block, and each dot of the "Colored Dots" style shows the color of its event.
 - **Shadow taxonomy support** — Works with GatherPress's shadow taxonomy pattern for post types acting as quasi-taxonomies.
 - **Flexible color roles** — The `gptc_term_color_roles` filter lets theme authors define any number of color roles per term (e.g., `primary`, `secondary`, `accent`, `base`). All layers derive from this single source of truth.
 - **Fully filterable** — `gptc_term_color_taxonomies` controls which taxonomies participate. `gptc_term_color_slots` controls the design token definitions. `gptc_term_color_roles` controls color roles per term.
